@@ -11,12 +11,142 @@ using Color=System.Drawing.Color;
 namespace SpaceWinds
 {
 
-public interface IModel
-{ void Render();
+public sealed class Global
+{ Global() { }
+
+  public static double NormalizeAngle(double angle)
+  { return angle<0 ? angle+Math.PI*2 : angle>=Math.PI*2 ? angle-Math.PI*2 : angle;
+  }
 }
 
-public class TriangleModel : IModel
-{ public void Render()
+public enum MountType : byte { Weapon }
+
+public abstract class Mountable
+{ public abstract void Fire(Ship owner, ref Mount mount);
+  public abstract void Render();
+}
+
+public class Bullet : SpaceObject
+{ public Bullet(Point pos, Vector vel) { Pos=pos; Velocity=vel; Born=App.Now; }
+
+  public override void Render()
+  { GL.glLoadIdentity();
+    GL.glBegin(GL.GL_POINTS);
+      GL.glColor(Color.White);
+      GL.glVertex2d(Pos.X, Pos.Y);
+    GL.glEnd();
+  }
+
+  public override void Update(double time)
+  { if(App.Now-Born>1.5) Dead = true;
+    else Pos += Velocity*time;
+  }
+  
+  public Vector Velocity;
+  public double Born;
+}
+
+public abstract class Weapon : Mountable
+{ protected bool TryFire()
+  { if(App.Now-LastFire>=ReloadTime)
+    { if(Ammo==-1) return true;
+      if(Ammo!=0) { Ammo--; return true; }
+    }
+    return false;
+  }
+
+  public double ReloadTime, LastFire;
+  public int Ammo;
+}
+
+public class SimpleGun : Weapon
+{ public SimpleGun() { Ammo=-1; ReloadTime=0.01; }
+
+  public override void Fire(Ship owner, ref Mount mount)
+  { if(TryFire())
+    { double gunAngle = owner.Angle+mount.CenterAngle+mount.Offset;
+      App.objects.Add(new Bullet(owner.Pos+new Vector(mount.X, mount.Y).Rotated(owner.Angle)+new Vector(3, 0).Rotated(gunAngle),
+                                 new Vector(owner.Speed, 0).Rotated(owner.Angle)+new Vector(500, 0).Rotated(gunAngle)));
+      LastFire = App.Now;
+    }
+  }
+
+  public override void Render()
+  { GL.glBegin(GL.GL_LINES);
+      GL.glColor(Color.White);
+      GL.glVertex2i(0, 0);
+      GL.glVertex2i(5, 0);
+    GL.glEnd();
+  }
+}
+
+public struct Mount
+{ public void Fire(Ship owner) { if(Mounted!=null) Mounted.Fire(owner, ref this); }
+
+  public void Render()
+  { if(Mounted==null) return;
+    GL.glPushMatrix();
+    GL.glTranslated(X, Y, 0);
+    GL.glRotated(-MathConst.RadiansToDegrees * (CenterAngle+Offset), 0, 0, -1);
+    Mounted.Render();
+    GL.glPopMatrix();
+  }
+
+  public void TurnTowards(double desiredAngle, double time)
+  { if(MaxTurn==0) { Offset=0; return; }
+
+    double turn, max;
+
+    if(MaxTurn==Math.PI*2)
+    { turn = desiredAngle-(CenterAngle+Offset);
+      if(turn>Math.PI) turn -= Math.PI*2;
+      else if(turn<-Math.PI) turn += Math.PI*2;
+    }
+    else
+    { double min = Global.NormalizeAngle(CenterAngle-MaxTurn);
+      max = Global.NormalizeAngle(CenterAngle+MaxTurn);
+      if(min<max)
+      { if(desiredAngle<min) desiredAngle = min;
+        else if(desiredAngle>max) desiredAngle = max;
+      }
+      else if(desiredAngle<min && desiredAngle>max)
+        desiredAngle = Math.Abs(desiredAngle-min)<Math.Abs(desiredAngle-max) ? min : max;
+
+      min = CenterAngle + Math.PI; // hijack 'min' to be the opposite of the center angle
+      if(min>=Math.PI*2) min -= Math.PI*2;
+
+      double cur = CenterAngle+Offset;
+      turn = desiredAngle - cur;
+
+      cur = Global.NormalizeAngle(cur-min);
+      desiredAngle = Global.NormalizeAngle(desiredAngle-min);
+
+      if(cur<desiredAngle)
+      { if(turn<0) turn += Math.PI*2;
+      }
+      else if(turn>0) turn -= Math.PI*2;
+    }
+
+    max = TurnSpeed*time;
+    if(Math.Abs(turn)>max) turn = max*Math.Sign(turn);
+
+    Offset += turn;
+    if(Offset<-Math.PI*2) Offset += Math.PI*2;
+    else if(Offset>Math.PI*2) Offset -= Math.PI*2;
+  }
+
+  public Mountable Mounted;
+  public double X, Y, CenterAngle, Offset, MaxTurn, TurnSpeed;
+  public MountType Type;
+  public byte MaxLevel;
+}
+
+public abstract class Model
+{ public abstract void Render();
+}
+
+public class TriangleModel : Model
+{ public override void Render()
   { GL.glBegin(GL.GL_TRIANGLES);
       GL.glColor(Color.Green);
       GL.glVertex2i(10, 0);
@@ -26,35 +156,121 @@ public class TriangleModel : IModel
   }
 }
 
-public class Entity
-{ public IModel Model;
+public abstract class SpaceObject
+{ public abstract void Render();
+  public abstract void Update(double time);
 
   public Point Pos;
-  public double Speed, Angle;
+  public bool Dead;
 }
 
-public class Ship : Entity
-{ public double MaxSpeed, MaxAccel, TurnSpeed, Throttle;
+public abstract class Ship : SpaceObject
+{ public override void Render()
+  { GL.glLoadIdentity();
+    GL.glTranslated(Pos.X, Pos.Y, 0);
+    GL.glRotated(-MathConst.RadiansToDegrees * Angle, 0, 0, -1); // negate the angle because we're rotating the /camera/
+
+    Model.Render();
+    if(Mounts!=null) for(int i=0; i<Mounts.Length; i++) Mounts[i].Render();
+  }
+
+  public void AimAt(Point pt, double time) { AimAt(GLMath.AngleBetween(Pos, pt), time); }
+  public void AimAt(double desiredAngle, double time)
+  { if(Mounts!=null)
+    { desiredAngle = Global.NormalizeAngle(desiredAngle-Angle);
+      for(int i=0; i<Mounts.Length; i++) Mounts[i].TurnTowards(desiredAngle, time);
+    }
+  }
+
+  public void TurnTowards(Point pt, double time) { TurnTowards(GLMath.AngleBetween(Pos, pt), time); }
+  public void TurnTowards(double desiredAngle, double time)
+  { double turn=desiredAngle-Angle, max=TurnSpeed*time;
+    if(turn>Math.PI) turn -= Math.PI*2;
+    else if(turn<-Math.PI) turn += Math.PI*2;
+    if(Math.Abs(turn)>max) turn = max*Math.Sign(turn);
+
+    Angle = Global.NormalizeAngle(Angle+turn);
+  }
+
+  public Mount[] Mounts;
+  public Model Model;
+  public double Speed, Angle, MaxSpeed, MaxAccel, TurnSpeed, Throttle;
 }
 
-public class Player
-{ public Ship Ship;
+public class Player : Ship
+{ // TODO: process events rather than poll the devices, so nothing gets lost between calls to Update()
+  public override void Update(double time)
+  { if(Mouse.PressedRel(MouseButton.Right)) turnTowardsCursor = !turnTowardsCursor;
+
+    { double angle = GLMath.AngleBetween(Pos, Mouse.Point);
+      if(turnTowardsCursor) TurnTowards(angle, time);
+      AimAt(angle, time);
+    }
+
+    if(Keyboard.Pressed(Key.Tab))
+    { double accel = MaxAccel*MaxSpeed*2*time;
+      Speed = Math.Min(Speed+accel, 500);
+    }
+    else
+    { if(Keyboard.Pressed(Key.Q) || Keyboard.Pressed(Key.A))
+      { if(Keyboard.Pressed(Key.Q)) Throttle = Math.Min(Throttle+time, 1);
+        else Throttle = Math.Max(Throttle-time, 0);
+      }
+      if(Keyboard.PressedRel(Key.Backquote)) Throttle = 0;
+
+      double accel=Throttle*MaxSpeed-Speed, max=MaxAccel*MaxSpeed*time;
+      if(Math.Abs(accel)>max) accel = max*Math.Sign(accel);
+      Speed += accel;
+    }
+
+    Pos += new Vector(Speed, 0).Rotated(Angle)*time;
+
+    if(Mounts!=null && Mouse.Pressed(MouseButton.Left)) for(int i=0; i<Mounts.Length; i++) Mounts[i].Fire(this);
+
+    if(Pos.X<0) Pos.X = 0;
+    else if(Pos.X>639) Pos.X = 639;
+
+    if(Pos.Y<0) Pos.Y = 0;
+    else if(Pos.Y>479) Pos.Y = 479;
+  }
+  
+  bool turnTowardsCursor;
 }
 
 public sealed class App
 { App() { }
 
+  public static double Now;
+  public static System.Collections.ArrayList objects = new System.Collections.ArrayList();
   public static void Main()
   { Video.Initialize();
     SetMode(640, 480);
     
     Player p = new Player();
-    p.Ship = new Ship();
-    p.Ship.MaxAccel = 1;
-    p.Ship.MaxSpeed = 250;
-    p.Ship.TurnSpeed = Math.PI*2;
-    p.Ship.Model = new TriangleModel();
-    p.Ship.Pos = new Point(320, 240);
+    p.MaxAccel = 1;
+    p.MaxSpeed = 250;
+    p.TurnSpeed = Math.PI;
+    p.Model = new TriangleModel();
+    p.Pos = new Point(320, 240);
+    
+    p.Mounts = new Mount[3];
+    p.Mounts[0].MaxTurn = Math.PI/2;
+    p.Mounts[0].Mounted = new SimpleGun();
+    p.Mounts[0].TurnSpeed = Math.PI*6;
+    p.Mounts[0].X = 10;
+
+    p.Mounts[1] = p.Mounts[2] = p.Mounts[0];
+    p.Mounts[1].CenterAngle = Math.PI*3/2;
+    p.Mounts[1].X = -10;
+    p.Mounts[1].Y = -5;
+    p.Mounts[1].Mounted = new SimpleGun();
+
+    p.Mounts[2].CenterAngle = Math.PI/2;
+    p.Mounts[2].X = -10;
+    p.Mounts[2].Y = 5;
+    p.Mounts[2].Mounted = new SimpleGun();
+
+    objects.Add(p);
 
     Events.Initialize();
     Input.Initialize();
@@ -68,49 +284,20 @@ public sealed class App
         if(e.Type==EventType.Exception) throw ((ExceptionEvent)e).Exception;
       }
 
-      double now = Timing.Seconds, time = now-lastTime;
+      Now = Timing.Seconds;
+      double diff = Now-lastTime;
 
-      { double turn=GLMath.AngleBetween(p.Ship.Pos, new Point(Mouse.Point))-p.Ship.Angle, max=p.Ship.TurnSpeed*time;
-        if(turn>Math.PI) turn -= Math.PI*2;
-        else if(turn<-Math.PI) turn += Math.PI*2;
-        if(Math.Abs(turn)>max) turn = max*Math.Sign(turn);
-
-        p.Ship.Angle += turn;
-        if(p.Ship.Angle<0) p.Ship.Angle += Math.PI*2;
+      for(int i=objects.Count-1; i>=0; i--)
+      { SpaceObject o = (SpaceObject)objects[i];
+        if(o.Dead) objects.RemoveAt(i);
+        else o.Update(diff);
       }
 
-      if(Keyboard.Pressed(Key.Tab))
-      { double accel = p.Ship.MaxAccel*p.Ship.MaxSpeed*2*time;
-        p.Ship.Speed = Math.Min(p.Ship.Speed+accel, 500);
-      }
-      else
-      { if(Keyboard.Pressed(Key.Q) || Keyboard.Pressed(Key.A))
-        { if(Keyboard.Pressed(Key.Q)) p.Ship.Throttle = Math.Min(p.Ship.Throttle+time, 1);
-          else p.Ship.Throttle = Math.Max(p.Ship.Throttle-time, 0);
-        }
-        if(Keyboard.Pressed(Key.Backquote)) p.Ship.Throttle = 0;
-
-        double accel=p.Ship.Throttle*p.Ship.MaxSpeed-p.Ship.Speed, max=p.Ship.MaxAccel*p.Ship.MaxSpeed*time;
-        if(Math.Abs(accel)>max) accel = max*Math.Sign(accel);
-        p.Ship.Speed += accel;
-      }
-
-      p.Ship.Pos += new Vector(p.Ship.Speed, 0).Rotated(p.Ship.Angle)*time;
-
-      if(p.Ship.Pos.X<0) p.Ship.Pos.X = 0;
-      else if(p.Ship.Pos.X>639) p.Ship.Pos.X = 639;
-
-      if(p.Ship.Pos.Y<0) p.Ship.Pos.Y = 0;
-      else if(p.Ship.Pos.Y>479) p.Ship.Pos.Y = 479;
+      lastTime = Now;
 
       GL.glClear(GL.GL_COLOR_BUFFER_BIT);
-      GL.glLoadIdentity();
-      GL.glTranslated(p.Ship.Pos.X, p.Ship.Pos.Y, 0);
-      GL.glRotated(MathConst.RadiansToDegrees * -p.Ship.Angle, 0, 0, -1); // negate the angle because we're rotating the /camera/
-      p.Ship.Model.Render();
+      foreach(SpaceObject o in objects) o.Render();
       Video.Flip();
-
-      lastTime = now;
     }
   }
 
