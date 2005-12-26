@@ -1,325 +1,144 @@
 using System;
 using GameLib;
-using GameLib.Mathematics;
-using GameLib.Mathematics.TwoD;
 using GameLib.Interop.OpenGL;
 using GameLib.Events;
 using GameLib.Input;
 using GameLib.Video;
+using Point2=GameLib.Mathematics.TwoD.Point;
+using Point3=GameLib.Mathematics.ThreeD.Point;
 using Color=System.Drawing.Color;
 
 namespace SpaceWinds
 {
 
-public sealed class Global
-{ Global() { }
 
-  public static double NormalizeAngle(double angle)
-  { return angle<0 ? angle+Math.PI*2 : angle>=Math.PI*2 ? angle-Math.PI*2 : angle;
-  }
-}
-
-public enum MountType : byte { Weapon }
-
-public abstract class Mountable
-{ public abstract void Fire(Ship owner, ref Mount mount);
-  public abstract void Render();
-}
-
-public class Bullet : SpaceObject
-{ public Bullet(Point pos, Vector vel) { Pos=pos; Velocity=vel; Born=App.Now; }
-
-  public override void Render()
-  { GL.glLoadIdentity();
-    GL.glBegin(GL.GL_POINTS);
-      GL.glColor(Color.White);
-      GL.glVertex2d(Pos.X, Pos.Y);
-    GL.glEnd();
-  }
-
-  public override void Update(double time)
-  { if(App.Now-Born>1.5) Dead = true;
-    else Pos += Velocity*time;
-  }
-  
-  public Vector Velocity;
-  public double Born;
-}
-
-public abstract class Weapon : Mountable
-{ protected bool TryFire()
-  { if(App.Now-LastFire>=ReloadTime)
-    { if(Ammo==-1) return true;
-      if(Ammo!=0) { Ammo--; return true; }
-    }
-    return false;
-  }
-
-  public double ReloadTime, LastFire;
-  public int Ammo;
-}
-
-public class SimpleGun : Weapon
-{ public SimpleGun() { Ammo=-1; ReloadTime=0.01; }
-
-  public override void Fire(Ship owner, ref Mount mount)
-  { if(TryFire())
-    { double gunAngle = owner.Angle+mount.CenterAngle+mount.Offset;
-      App.objects.Add(new Bullet(owner.Pos+new Vector(mount.X, mount.Y).Rotated(owner.Angle)+new Vector(3, 0).Rotated(gunAngle),
-                                 new Vector(owner.Speed, 0).Rotated(owner.Angle)+new Vector(500, 0).Rotated(gunAngle)));
-      LastFire = App.Now;
-    }
-  }
-
-  public override void Render()
-  { GL.glBegin(GL.GL_LINES);
-      GL.glColor(Color.White);
-      GL.glVertex2i(0, 0);
-      GL.glVertex2i(5, 0);
-    GL.glEnd();
-  }
-}
-
-public struct Mount
-{ public void Fire(Ship owner) { if(Mounted!=null) Mounted.Fire(owner, ref this); }
-
-  public void Render()
-  { if(Mounted==null) return;
-    GL.glPushMatrix();
-    GL.glTranslated(X, Y, 0);
-    GL.glRotated(-MathConst.RadiansToDegrees * (CenterAngle+Offset), 0, 0, -1);
-    Mounted.Render();
-    GL.glPopMatrix();
-  }
-
-  public void TurnTowards(double desiredAngle, double time)
-  { if(MaxTurn==0) { Offset=0; return; }
-
-    double turn, max;
-
-    if(MaxTurn==Math.PI*2)
-    { turn = desiredAngle-(CenterAngle+Offset);
-      if(turn>Math.PI) turn -= Math.PI*2;
-      else if(turn<-Math.PI) turn += Math.PI*2;
-    }
-    else
-    { double min = Global.NormalizeAngle(CenterAngle-MaxTurn);
-      max = Global.NormalizeAngle(CenterAngle+MaxTurn);
-      if(min<max)
-      { if(desiredAngle<min) desiredAngle = min;
-        else if(desiredAngle>max) desiredAngle = max;
-      }
-      else if(desiredAngle<min && desiredAngle>max)
-        desiredAngle = Math.Abs(desiredAngle-min)<Math.Abs(desiredAngle-max) ? min : max;
-
-      min = CenterAngle + Math.PI; // hijack 'min' to be the opposite of the center angle
-      if(min>=Math.PI*2) min -= Math.PI*2;
-
-      double cur = CenterAngle+Offset;
-      turn = desiredAngle - cur;
-
-      cur = Global.NormalizeAngle(cur-min);
-      desiredAngle = Global.NormalizeAngle(desiredAngle-min);
-
-      if(cur<desiredAngle)
-      { if(turn<0) turn += Math.PI*2;
-      }
-      else if(turn>0) turn -= Math.PI*2;
-    }
-
-    max = TurnSpeed*time;
-    if(Math.Abs(turn)>max) turn = max*Math.Sign(turn);
-
-    Offset += turn;
-    if(Offset<-Math.PI*2) Offset += Math.PI*2;
-    else if(Offset>Math.PI*2) Offset -= Math.PI*2;
-  }
-
-  public Mountable Mounted;
-  public double X, Y, CenterAngle, Offset, MaxTurn, TurnSpeed;
-  public MountType Type;
-  public byte MaxLevel;
-}
-
-public abstract class Model
-{ public abstract void Render();
-}
-
-public class TriangleModel : Model
-{ public override void Render()
-  { GL.glBegin(GL.GL_TRIANGLES);
-      GL.glColor(Color.Green);
-      GL.glVertex2i(10, 0);
-      GL.glVertex2i(-10, 5);
-      GL.glVertex2i(-10, -5);
-    GL.glEnd();
-  }
-}
-
-public abstract class SpaceObject
-{ public abstract void Render();
-  public abstract void Update(double time);
-
-  public Point Pos;
-  public bool Dead;
-}
-
-public abstract class Ship : SpaceObject
-{ public override void Render()
-  { GL.glLoadIdentity();
-    GL.glTranslated(Pos.X, Pos.Y, 0);
-    GL.glRotated(-MathConst.RadiansToDegrees * Angle, 0, 0, -1); // negate the angle because we're rotating the /camera/
-
-    Model.Render();
-    if(Mounts!=null) for(int i=0; i<Mounts.Length; i++) Mounts[i].Render();
-  }
-
-  public void AimAt(Point pt, double time) { AimAt(GLMath.AngleBetween(Pos, pt), time); }
-  public void AimAt(double desiredAngle, double time)
-  { if(Mounts!=null)
-    { desiredAngle = Global.NormalizeAngle(desiredAngle-Angle);
-      for(int i=0; i<Mounts.Length; i++) Mounts[i].TurnTowards(desiredAngle, time);
-    }
-  }
-
-  public void TurnTowards(Point pt, double time) { TurnTowards(GLMath.AngleBetween(Pos, pt), time); }
-  public void TurnTowards(double desiredAngle, double time)
-  { double turn=desiredAngle-Angle, max=TurnSpeed*time;
-    if(turn>Math.PI) turn -= Math.PI*2;
-    else if(turn<-Math.PI) turn += Math.PI*2;
-    if(Math.Abs(turn)>max) turn = max*Math.Sign(turn);
-
-    Angle = Global.NormalizeAngle(Angle+turn);
-  }
-
-  public Mount[] Mounts;
-  public Model Model;
-  public double Speed, Angle, MaxSpeed, MaxAccel, TurnSpeed, Throttle;
-}
-
-public class Player : Ship
-{ // TODO: process events rather than poll the devices, so nothing gets lost between calls to Update()
-  public override void Update(double time)
-  { if(Mouse.PressedRel(MouseButton.Right)) turnTowardsCursor = !turnTowardsCursor;
-
-    { double angle = GLMath.AngleBetween(Pos, Mouse.Point);
-      if(turnTowardsCursor) TurnTowards(angle, time);
-      AimAt(angle, time);
-    }
-
-    if(Keyboard.Pressed(Key.Tab))
-    { double accel = MaxAccel*MaxSpeed*2*time;
-      Speed = Math.Min(Speed+accel, 500);
-    }
-    else
-    { if(Keyboard.Pressed(Key.Q) || Keyboard.Pressed(Key.A))
-      { if(Keyboard.Pressed(Key.Q)) Throttle = Math.Min(Throttle+time, 1);
-        else Throttle = Math.Max(Throttle-time, 0);
-      }
-      if(Keyboard.PressedRel(Key.Backquote)) Throttle = 0;
-
-      double accel=Throttle*MaxSpeed-Speed, max=MaxAccel*MaxSpeed*time;
-      if(Math.Abs(accel)>max) accel = max*Math.Sign(accel);
-      Speed += accel;
-    }
-
-    Pos += new Vector(Speed, 0).Rotated(Angle)*time;
-
-    if(Mounts!=null && Mouse.Pressed(MouseButton.Left)) for(int i=0; i<Mounts.Length; i++) Mounts[i].Fire(this);
-
-    if(Pos.X<0) Pos.X = 0;
-    else if(Pos.X>639) Pos.X = 639;
-
-    if(Pos.Y<0) Pos.Y = 0;
-    else if(Pos.Y>479) Pos.Y = 479;
-  }
-  
-  bool turnTowardsCursor;
-}
-
+#region App
 public sealed class App
 { App() { }
 
-  public static double Now;
-  public static System.Collections.ArrayList objects = new System.Collections.ArrayList();
+  public const double NearZ=10, FarZ=100, XYSize=5;
+  public readonly static string DataPath = "../../data/work/";
+
+  // these are for the map view only
+  public static double[] ModelMatrix=new double[16], ProjectionMatrix=new double[16];
+  public static int[] Viewport=new int[4];
+
+  public static double Now, TimeDelta;
+  public static Player Player;
+
   public static void Main()
   { Video.Initialize();
     SetMode(640, 480);
-    
-    Player p = new Player();
-    p.MaxAccel = 1;
-    p.MaxSpeed = 250;
-    p.TurnSpeed = Math.PI;
-    p.Model = new TriangleModel();
-    p.Pos = new Point(320, 240);
-    
-    p.Mounts = new Mount[3];
-    p.Mounts[0].MaxTurn = Math.PI/2;
-    p.Mounts[0].Mounted = new SimpleGun();
-    p.Mounts[0].TurnSpeed = Math.PI*6;
-    p.Mounts[0].X = 10;
 
-    p.Mounts[1] = p.Mounts[2] = p.Mounts[0];
-    p.Mounts[1].CenterAngle = Math.PI*3/2;
-    p.Mounts[1].X = -10;
-    p.Mounts[1].Y = -5;
-    p.Mounts[1].Mounted = new SimpleGun();
+    Player = new Player();
+    Player.MaxAccel = 1.25;
+    Player.MaxSpeed = 10;
+    Player.TurnSpeed = Math.PI;
+    ObjModel ship = new ObjModel("ship");
+    Player.Model = ship;
+    Player.Mounts = ship.Mounts;
+    Player.Mounts[0].Mounted = new Weapon(new SimpleGun());
+    Player.Mounts[1].Mounted = new Weapon(new SimpleGun());
+    Player.Mounts[2].Mounted = new Weapon(new SimpleGun());
 
-    p.Mounts[2].CenterAngle = Math.PI/2;
-    p.Mounts[2].X = -10;
-    p.Mounts[2].Y = 5;
-    p.Mounts[2].Mounted = new SimpleGun();
-
-    objects.Add(p);
+    Map map = new Map();
+    map.Add(Player);
 
     Events.Initialize();
     Input.Initialize();
 
-    double lastTime = Timing.Seconds;
+    double lastTime = Timing.Seconds, zoom = (FarZ-NearZ)/2+NearZ;
     while(true)
     { Event e = Events.NextEvent(0);
       if(e!=null)
-      { Input.ProcessEvent(e);
-        if(Keyboard.Pressed(Key.Escape) || e.Type==EventType.Quit) break;
-        if(e.Type==EventType.Exception) throw ((ExceptionEvent)e).Exception;
+      { if(Input.ProcessEvent(e))
+        { if(e.Type==EventType.MouseClick)
+          { MouseClickEvent mc = (MouseClickEvent)e;
+            if(mc.Button==MouseButton.WheelDown) zoom = Math.Min(FarZ-XYSize, zoom+XYSize);
+            else if(mc.Button==MouseButton.WheelUp) zoom = Math.Max(NearZ+XYSize, zoom-XYSize);
+          }
+          else if(Keyboard.Pressed(Key.Escape)) break;
+        }
+        else if(e.Type==EventType.Resize)
+        { ResizeEvent re = (ResizeEvent)e;
+          SetMode(re.Width, re.Height);
+        }
+        else if(e.Type==EventType.Quit) break;
+        else if(e.Type==EventType.Exception) throw ((ExceptionEvent)e).Exception;
       }
 
-      Now = Timing.Seconds;
-      double diff = Now-lastTime;
+      Now       = Timing.Seconds;
+      TimeDelta = Now-lastTime;
+      lastTime  = Now;
+      map.Update();
 
-      for(int i=objects.Count-1; i>=0; i--)
-      { SpaceObject o = (SpaceObject)objects[i];
-        if(o.Dead) objects.RemoveAt(i);
-        else o.Update(diff);
+      if(WM.Active)
+      { GL.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT);
+        //GL.glMatrixMode(GL.GL_VIEWPORT);
+        //GL.glViewport(0, 0, Video.Height, Video.Height);
+        //GL.glMatrixMode(GL.GL_MODELVIEW);
+        map.Render(new Point3(Player.Pos.X, Player.Pos.Y, zoom));
+        Video.Flip();
       }
-
-      lastTime = Now;
-
-      GL.glClear(GL.GL_COLOR_BUFFER_BIT);
-      foreach(SpaceObject o in objects) o.Render();
-      Video.Flip();
     }
   }
 
   static void SetMode(int width, int height)
   { Video.SetGLMode(width, height, 32, SurfaceFlag.DoubleBuffer);
 
-    GL.glDisable(GL.GL_DITHER);
-    GL.glEnable(GL.GL_BLEND);
-    GL.glEnable(GL.GL_TEXTURE_2D);
-    GL.glBlendFunc(GL.GL_SRC_ALPHA, GL.GL_ONE_MINUS_SRC_ALPHA);
-    GL.glHint(GL.GL_PERSPECTIVE_CORRECTION_HINT, GL.GL_FASTEST);
-    GL.glShadeModel(GL.GL_SMOOTH);
-    GL.glClearColor(0, 0, 0, 0);
+    GL.glEnable(GL.GL_DEPTH_TEST); // z-buffering
+    GL.glDepthFunc(GL.GL_LEQUAL);
 
-    GL.glMatrixMode(GL.GL_PROJECTION);
-    GLU.gluOrtho2D(0, width, height, 0);
+    GL.glBlendFunc(GL.GL_SRC_ALPHA, GL.GL_ONE_MINUS_SRC_ALPHA); // alpha blending
+
+    GL.glEnable(GL.GL_TEXTURE_2D); // texture mapping
+    GL.glHint(GL.GL_PERSPECTIVE_CORRECTION_HINT, GL.GL_NICEST);
+
+    GL.glEnable(GL.GL_POLYGON_SMOOTH);
+    GL.glHint(GL.GL_POLYGON_SMOOTH_HINT, GL.GL_NICEST);
+
+    GL.glClearColor(0, 0, 0, 1); // misc stuff
+    GL.glDisable(GL.GL_DITHER);
+
+    GL.glMatrixMode(GL.GL_PROJECTION); // matrices
+    GL.glFrustum(-XYSize, XYSize, XYSize, -XYSize, NearZ, FarZ);
+    GL.glGetDoublev(GL.GL_PROJECTION_MATRIX, ProjectionMatrix);
+
     GL.glMatrixMode(GL.GL_VIEWPORT);
     GL.glViewport(0, 0, width, height);
-    GL.glMatrixMode(GL.GL_MODELVIEW);
+    GL.glGetIntegerv(GL.GL_VIEWPORT, Viewport);
 
+    GL.glMatrixMode(GL.GL_MODELVIEW);
+    GL.glLoadIdentity();
+    GL.glGetDoublev(GL.GL_MODELVIEW_MATRIX, ModelMatrix);
+
+    GL.glShadeModel(GL.GL_SMOOTH); // lighting
+    GL.glEnable(GL.GL_LIGHTING);
+    GL.glEnable(GL.GL_LIGHT0);
+    GL.glLightModeli(GL.GL_LIGHT_MODEL_TWO_SIDE, GL.GL_FALSE);
+    GL.glLightPosition(GL.GL_LIGHT0, 50, 0, 25, 0);
+    
     WM.WindowTitle = "Space Winds";
   }
 }
+#endregion
+
+#region Misc
+public sealed class Misc
+{ Misc() { }
+
+  public static double NormalizeAngle(double angle)
+  { return angle<0 ? angle+Math.PI*2 : angle>=Math.PI*2 ? angle-Math.PI*2 : angle;
+  }
+  
+  public static Point2 Project(Point2 pt) { return Project(new Point3(pt.X, pt.Y, App.NearZ)); }
+  public static Point2 Project(Point3 pt)
+  { double wx, wy, wz;
+    GLU.gluProject(pt.X, pt.Y, pt.Z, App.ModelMatrix, App.ProjectionMatrix, App.Viewport, out wx, out wy, out wz);
+    return new Point2(wx, App.Viewport[3]-wy);
+  }
+}
+#endregion
+
 
 } // namespace SpaceWinds
