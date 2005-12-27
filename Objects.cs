@@ -147,7 +147,7 @@ public sealed class SimpleGun : WeaponClass
 { public SimpleGun() { MaxAmmo=-1; ReloadTime=0.1; }
 
   public override SpaceObject CreateProjectile(Point startPoint, Vector baseVelocity, double gunAngle)
-  { return new Bullet(startPoint, baseVelocity+new Vector(10, 0).Rotated(gunAngle));
+  { return new Bullet(startPoint, baseVelocity+new Vector(50, 0).Rotated(gunAngle));
   }
 }
 
@@ -163,10 +163,13 @@ public sealed class Bullet : SpaceObject
   public double Born;
 
   protected override void RenderModel()
-  { GL.glBegin(GL.GL_POINTS);
+  { GL.glDisable(GL.GL_LIGHTING);
+    GL.glPointSize(2);
+    GL.glBegin(GL.GL_POINTS);
       GL.glColor(System.Drawing.Color.White);
-      GL.glVertex2d(Pos.X, Pos.Y);
+      GL.glVertex2d(0, 0);
     GL.glEnd();
+    GL.glEnable(GL.GL_LIGHTING);
   }
 }
 
@@ -204,8 +207,7 @@ public abstract class MountsObject : SpaceObject
   { if(Mounts!=null)
     { Point3 opt = new Point3(Pos.X, Pos.Y, 0);
       for(int i=0; i<Mounts.Length; i++)
-        Mounts[i].TurnTowards(GLMath.AngleBetween(Misc.Project(opt+Mounts[i].Class.RenderOffset.RotatedZ(Angle)), pt) -
-                              Angle);
+        Mounts[i].TurnTowards(Misc.AngleBetween(opt+Mounts[i].Class.RenderOffset.RotatedZ(Angle), pt) - Angle);
     }
   }
 
@@ -220,7 +222,7 @@ public abstract class MountsObject : SpaceObject
 
 #region Ship
 public abstract class Ship : MountsObject
-{ public void TurnTowards(Point pt) { TurnTowards(GLMath.AngleBetween(Misc.Project(Pos), pt)); }
+{ public void TurnTowards(Point pt) { TurnTowards(GLMath.AngleBetween(Pos, pt)); }
   public void TurnTowards(double desiredAngle)
   { double turn=desiredAngle-Angle, max=TurnSpeed*App.TimeDelta;
     if(turn>Math.PI) turn -= Math.PI*2;
@@ -239,8 +241,11 @@ public sealed class Player : Ship
 { public override void Update()
   { if(Mouse.PressedRel(MouseButton.Right)) turnTowardsCursor = !turnTowardsCursor;
 
-    if(turnTowardsCursor) TurnTowards(Mouse.Point);
-    AimAt(Mouse.Point);
+    { Point3 pt3 = Misc.Unproject(Mouse.Point);
+      Point pt = new Point(pt3.X, pt3.Y);
+      if(turnTowardsCursor) TurnTowards(pt);
+      AimAt(pt);
+    }
 
     if(Keyboard.Pressed(Key.Tab))
     { double accel = MaxAccel*MaxSpeed*2*App.TimeDelta;
