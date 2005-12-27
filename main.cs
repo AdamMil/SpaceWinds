@@ -4,9 +4,10 @@ using GameLib.Interop.OpenGL;
 using GameLib.Events;
 using GameLib.Input;
 using GameLib.Video;
+using GameLib.Mathematics;
 using Point2=GameLib.Mathematics.TwoD.Point;
 using Point3=GameLib.Mathematics.ThreeD.Point;
-using Color=System.Drawing.Color;
+using SPoint=System.Drawing.Point;
 
 namespace SpaceWinds
 {
@@ -20,9 +21,10 @@ public sealed class App
   public readonly static string DataPath = "../../data/work/";
 
   // these are for the map view only
-  public static double[] ModelMatrix=new double[16], ProjectionMatrix=new double[16];
+  public static double[] ProjectionMatrix=new double[16];
   public static int[] Viewport=new int[4];
 
+  public static Point3 Camera;
   public static double Now, TimeDelta;
   public static Player Player;
 
@@ -70,6 +72,10 @@ public sealed class App
       Now       = Timing.Seconds;
       TimeDelta = Now-lastTime;
       lastTime  = Now;
+      
+      Camera = new Point3(Player.Pos.X, Player.Pos.Y, zoom);
+      GL.glLoadIdentity();
+      GL.glTranslated(-Camera.X, -Camera.Y, -Camera.Z);
       map.Update();
 
       if(WM.Active)
@@ -77,7 +83,7 @@ public sealed class App
         //GL.glMatrixMode(GL.GL_VIEWPORT);
         //GL.glViewport(0, 0, Video.Height, Video.Height);
         //GL.glMatrixMode(GL.GL_MODELVIEW);
-        map.Render(new Point3(Player.Pos.X, Player.Pos.Y, zoom));
+        map.Render();
         Video.Flip();
       }
     }
@@ -110,7 +116,6 @@ public sealed class App
 
     GL.glMatrixMode(GL.GL_MODELVIEW);
     GL.glLoadIdentity();
-    GL.glGetDoublev(GL.GL_MODELVIEW_MATRIX, ModelMatrix);
 
     GL.glShadeModel(GL.GL_SMOOTH); // lighting
     GL.glEnable(GL.GL_LIGHTING);
@@ -127,6 +132,12 @@ public sealed class App
 public sealed class Misc
 { Misc() { }
 
+  public static double AngleBetween(Point2 a, Point3 b) { return GLMath.AngleBetween(a, new Point2(b.X, b.Y)); }
+  public static double AngleBetween(Point3 a, Point2 b) { return GLMath.AngleBetween(new Point2(a.X, a.Y), b); }
+  public static double AngleBetween(Point3 a, Point3 b)
+  { return GLMath.AngleBetween(new Point2(a.X, b.X), new Point2(b.X, b.Y));
+  }
+
   public static double NormalizeAngle(double angle)
   { return angle<0 ? angle+Math.PI*2 : angle>=Math.PI*2 ? angle-Math.PI*2 : angle;
   }
@@ -134,9 +145,24 @@ public sealed class Misc
   public static Point2 Project(Point2 pt) { return Project(new Point3(pt.X, pt.Y, App.NearZ)); }
   public static Point2 Project(Point3 pt)
   { double wx, wy, wz;
-    GLU.gluProject(pt.X, pt.Y, pt.Z, App.ModelMatrix, App.ProjectionMatrix, App.Viewport, out wx, out wy, out wz);
+    GL.glGetDoublev(GL.GL_MODELVIEW_MATRIX, modelMatrix);
+    GLU.gluProject(pt.X, pt.Y, pt.Z, modelMatrix, App.ProjectionMatrix, App.Viewport, out wx, out wy, out wz);
     return new Point2(wx, App.Viewport[3]-wy);
   }
+
+  public static Point3 Unproject(SPoint pt) { return Unproject(pt, 0); }
+  public static Point3 Unproject(SPoint pt, double worldZ)
+  { double ox, oy, oz, ox2, oy2, oz2, factor;
+    GL.glGetDoublev(GL.GL_MODELVIEW_MATRIX, modelMatrix);
+    GLU.gluUnProject(pt.X, App.Viewport[3]-pt.Y, 0, modelMatrix, App.ProjectionMatrix, App.Viewport,
+                     out ox, out oy, out oz);
+    GLU.gluUnProject(pt.X, App.Viewport[3]-pt.Y, 1, modelMatrix, App.ProjectionMatrix, App.Viewport,
+                     out ox2, out oy2, out oz2);
+    factor = (worldZ-oz)/(oz2-oz);
+    return new Point3(ox+(ox2-ox)*factor, oy+(oy2-oy)*factor, worldZ);
+  }
+  
+  public readonly static double[] modelMatrix = new double[16];
 }
 #endregion
 

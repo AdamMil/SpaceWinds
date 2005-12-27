@@ -26,37 +26,58 @@ public sealed class Map
   public ArrayList GetObjects(Point pt) { return (ArrayList)parts[WorldToPart(pt)]; }
   public ArrayList GetObjects(SPoint pt) { return (ArrayList)parts[pt]; }
 
-  public void Render(Point3 camera)
-  { double x, y, x2, y2, z;
-    // FIXME: this code isn't correct
-    GLU.gluProject(-App.XYSize, -App.XYSize, App.FarZ, App.ModelMatrix, App.ProjectionMatrix, App.Viewport,
-                   out x, out y, out z);
-    GLU.gluProject(App.XYSize, App.XYSize, App.FarZ, App.ModelMatrix, App.ProjectionMatrix, App.Viewport,
-                   out x2, out y2, out z);
-    x = (x2-x)*0.5; // get the size of the visible area, in world coordinates, divided by 2
-    y = (y-y2)*0.5;
-    
-    x = y = 0; // FIXME: remove this after fixing above code
+  public Point PartToWorld(int x, int y) { return new Point(x*Factor, y*Factor); }
 
-    GL.glPushMatrix();
-      GL.glTranslated(-camera.X, -camera.Y, -camera.Z);
-      SPoint topLeft = WorldToPart(camera.X-x, camera.Y-y), topRight = WorldToPart(camera.X+x, camera.Y-y),
-             btmLeft = WorldToPart(camera.X-x, camera.Y+y);
-      RenderObjects(topLeft);
-      if(topRight!=topLeft) RenderObjects(topRight);
-      if(topLeft!=btmLeft)
-      { RenderObjects(btmLeft);
-        if(topRight!=topLeft) RenderObjects(WorldToPart(camera.X+x, camera.Y+y));
+  public void Render()
+  { int x, x2, y, yd;
+  
+    { Point3 wtl = Misc.Unproject(new SPoint(App.Viewport[0], App.Viewport[1])),
+             wbr = Misc.Unproject(new SPoint(App.Viewport[0]+App.Viewport[2], App.Viewport[1]+App.Viewport[3]));
+      SPoint tl = WorldToPart(wtl.X, wtl.Y), br = WorldToPart(wbr.X, wbr.Y);
+      x = tl.X; y = tl.Y; x2 = br.X; yd = br.Y-y+1;
+    }
+
+    { Point wtl = PartToWorld(x, y), wbr = PartToWorld(x2+1, y+yd);
+      wtl.X -= App.Camera.X; wbr.X -= App.Camera.X;
+      wtl.Y -= App.Camera.Y; wbr.Y -= App.Camera.Y;
+
+      GL.glDisable(GL.GL_LIGHTING);
+      GL.glColor3d(1/3.0, 1/3.0, 1/3.0);
+      GL.glBegin(GL.GL_LINES);
+
+      double c;
+      int cd;
+      cd = (x2-x+2); c = wtl.X;
+      for(int t=0; t<cd; c+=Factor, t++)
+      { GL.glVertex2d(c, wtl.Y);
+        GL.glVertex2d(c, wbr.Y);
       }
-    GL.glPopMatrix();
+
+      cd = yd+1; c = wtl.Y;
+      for(int t=0; t<cd; c+=Factor, t++)
+      { GL.glVertex2d(wtl.X, c);
+        GL.glVertex2d(wbr.X, c);
+      }
+      GL.glEnd();
+      GL.glEnable(GL.GL_LIGHTING);
+    }
+
+    for(; x<=x2; x++) for(int yi=0; yi<yd; yi++) RenderObjects(x, y+yi);
   }
 
   public void Update()
-  { if(parts.Count>partArr.Length) partArr = new DictionaryEntry[parts.Count];
-    parts.CopyTo(partArr, 0);
+  { if(parts.Count>partArr.Length)
+    { partArr = new DictionaryEntry[parts.Count];
+      partArrChanged = true;
+    }
+    if(partArrChanged)
+    { parts.CopyTo(partArr, 0);
+      partArrChanged = false;
+    }
 
-    foreach(DictionaryEntry de in partArr)
-    { ArrayList objs = (ArrayList)de.Value;
+    for(int pi=0,pcount=parts.Count; pi<pcount; pi++)
+    { DictionaryEntry de = partArr[pi];
+      ArrayList objs = (ArrayList)de.Value;
       if(objs.Count==0) unused.Add(de);
       else
       { SPoint part = (SPoint)de.Key;
@@ -87,6 +108,7 @@ public sealed class Map
     if(unused.Count!=0)
     { foreach(DictionaryEntry de in unused) if(((ArrayList)de.Value).Count==0) parts.Remove(de.Key);
       unused.Clear();
+      partArrChanged = true;
     }
   }
 
@@ -101,12 +123,15 @@ public sealed class Map
 
   ArrayList MakeObjects(SPoint pt)
   { ArrayList list = (ArrayList)parts[pt];
-    if(list==null) parts[pt] = list = new ArrayList();
+    if(list==null)
+    { parts[pt] = list = new ArrayList();
+      partArrChanged = true;
+    }
     return list;
   }
 
-  void RenderObjects(SPoint pt)
-  { ArrayList objs = GetObjects(pt);
+  void RenderObjects(int x, int y)
+  { ArrayList objs = GetObjects(new SPoint(x, y));
     if(objs==null) return;
     foreach(SpaceObject obj in objs) obj.Render();
   }
@@ -115,6 +140,7 @@ public sealed class Map
   
   static ArrayList unused = new ArrayList();
   static DictionaryEntry[] partArr = new DictionaryEntry[0];
+  static bool partArrChanged;
 }
 
 } // namespace SpaceWinds
