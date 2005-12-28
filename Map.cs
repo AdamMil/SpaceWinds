@@ -37,12 +37,14 @@ public sealed class Map
       x = tl.X; y = tl.Y; x2 = br.X; yd = br.Y-y+1;
     }
 
+    /* TODO: these don't render correctly, but maybe i can just do away with them entirely
+    */
     { Point wtl = PartToWorld(x, y), wbr = PartToWorld(x2+1, y+yd);
       wtl.X -= App.Camera.X; wbr.X -= App.Camera.X;
       wtl.Y -= App.Camera.Y; wbr.Y -= App.Camera.Y;
 
       GL.glDisable(GL.GL_LIGHTING);
-      GL.glColor3d(1/3.0, 1/3.0, 1/3.0);
+      GL.glColor3d(.2, .2, .2);
       GL.glBegin(GL.GL_LINES);
 
       double c;
@@ -84,11 +86,7 @@ public sealed class Map
         for(int i=objs.Count-1; i>=0; i--)
         { SpaceObject obj = (SpaceObject)objs[i];
 
-          if(!obj.Is(ObjFlag.Dead))
-          { int count = objs.Count;
-            obj.Update();
-            i += count-objs.Count; // TODO: make this robust (so nothing gets missed and nothing gets updated twice)
-          }
+          if(!obj.Is(ObjFlag.Dead)) obj.Update();
 
           if(obj.Is(ObjFlag.Dead))
           { objs.RemoveAt(i);
