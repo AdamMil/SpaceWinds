@@ -79,6 +79,11 @@
                     AssemblyName = "System.Drawing"
                     HintPath = "C:\WINDOWS\Microsoft.NET\Framework\v1.1.4322\System.Drawing.dll"
                 />
+                <Reference
+                    Name = "System.XML"
+                    AssemblyName = "System.XML"
+                    HintPath = "C:\WINDOWS\Microsoft.NET\Framework\v1.1.4322\System.XML.dll"
+                />
             </References>
         </Build>
         <Files>
@@ -105,6 +110,11 @@
                 />
                 <File
                     RelPath = "Objects.cs"
+                    SubType = "Code"
+                    BuildAction = "Compile"
+                />
+                <File
+                    RelPath = "Xml.cs"
                     SubType = "Code"
                     BuildAction = "Compile"
                 />

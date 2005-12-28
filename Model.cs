@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.IO;
 using System.Text.RegularExpressions;
+using System.Xml;
 using GameLib.Mathematics;
 using GameLib.Mathematics.ThreeD;
 using GameLib.Interop.OpenGL;
@@ -10,75 +11,38 @@ namespace SpaceWinds
 {
 
 public abstract class Model
-{ public abstract void Render();
-}
-
-public sealed class CubeModel : Model
-{
-  public override void Render()
-  { GL.glShadeModel(GL.GL_FLAT);
-    GL.glBegin(GL.GL_QUADS);
-      // front
-      GL.glNormal3d(0, 0, 1);
-      GL.glColor3d(1, 0, 0);
-      GL.glVertex3d(-2, -2, 2);
-      GL.glVertex3d(2, -2, 2);
-      GL.glVertex3d(2, 2, 2);
-      GL.glVertex3d(-2, 2, 2);
-
-      // back
-      GL.glNormal3d(0, 0, -1);
-      GL.glColor3d(0, 1, 1);
-      GL.glVertex3d(-2, -2, -2);
-      GL.glVertex3d(2, -2, -2);
-      GL.glVertex3d(2, 2, -2);
-      GL.glVertex3d(-2, 2, -2);
-      
-      // left
-      GL.glNormal3d(-1, 0, 0);
-      GL.glColor3d(0, 1, 0);
-      GL.glVertex3d(-2, -2, 2);
-      GL.glVertex3d(-2, 2, 2);
-      GL.glVertex3d(-2, 2, -2);
-      GL.glVertex3d(-2, -2, -2);
-
-      // right
-      GL.glNormal3d(1, 0, 0);
-      GL.glColor3d(1, 1, 0);
-      GL.glVertex3d(2, -2, 2);
-      GL.glVertex3d(2, 2, 2);
-      GL.glVertex3d(2, 2, -2);
-      GL.glVertex3d(2, -2, -2);
-      
-      // top
-      GL.glNormal3d(0, -1, 0);
-      GL.glColor3d(0, 0, 1);
-      GL.glVertex3d(-2, -2, -2);
-      GL.glVertex3d(2, -2, -2);
-      GL.glVertex3d(2, -2, 2);
-      GL.glVertex3d(-2, -2, 2);
-
-      // bottom
-      GL.glNormal3d(0, 1, 0);
-      GL.glColor3d(1, 0, 1);
-      GL.glVertex3d(-2, 2, -2);
-      GL.glVertex3d(2, 2, -2);
-      GL.glVertex3d(2, 2, 2);
-      GL.glVertex3d(-2, 2, 2);
-    GL.glEnd();
+{ public Model(XmlElement data) { Data=data; }
+  public abstract void Render();
+  public XmlElement Data;
+  
+  public static Model Load(string modelName) { return Load(modelName, null); }
+  public static Model Load(string modelName, XmlElement data)
+  { Model model = (Model)models[modelName];
+    if(model==null)
+    { if(data==null)
+      { XmlDocument doc = Misc.LoadXml(modelName+".xml", false);
+        if(doc!=null) data = doc.DocumentElement;
+      }
+      models[modelName] = model = new ObjModel(modelName, data);
+    }
+    return model;
   }
+
+  static Hashtable models = new Hashtable();
 }
 
 public sealed class ObjModel : Model
-{ public ObjModel(string modelName)
-  { TextReader tr = new StreamReader(App.DataPath+modelName+".obj");
+{ public ObjModel(string modelName, XmlElement data) : base(data)
+  { modelName += ".obj";
+    if(data!=null) modelName = Xml.Attr(data, "model", modelName);
+    TextReader tr = new StreamReader(App.DataPath+modelName);
     Load(tr);
     tr.Close();
   }
 
-  public Mount[] Mounts;
+  public MountClass[] Mounts;
 
-  public override void Render() { for(int i=0; i<subObjects.Length; i++) { GL.glColor4d((i*20+80)/255.0, (i*20+80)/255.0, (i*20+80)/255.0, 1); subObjects[i].Render(this); } }
+  public override void Render() { for(int i=0; i<subObjects.Length; i++) subObjects[i].Render(this); }
 
   struct SubObject
   { public SubObject(TextReader tr, ref string nameLine, ArrayList points, ArrayList norms)
@@ -155,27 +119,24 @@ public sealed class ObjModel : Model
         if(so.Name.StartsWith("exhaust_port_")) { }
         else if(so.Name.StartsWith("mount_")) // TODO: fix this mount loading code
         { Match m = mountre.Match(so.Name);
-          Mount mount = new Mount();
-          mount.Class = new MountClass();
+          XmlNode node = Data.SelectSingleNode("mount[@id='"+m.Groups[1].Value+"']");
 
-          mount.Class.Model = new ObjModel(m.Groups[1].Value);
-          mount.Class.CenterAngle = int.Parse(m.Groups[2].Value) * MathConst.DegreesToRadians;
-
-          int n;
-          n = int.Parse(m.Groups[3].Value);
-          mount.Class.MaxTurn = n==90 ? Math.PI/2 : n>=180 ? Math.PI : n*MathConst.DegreesToRadians;
-
-          mount.Class.TurnSpeed = Math.PI*6;
+          MountClass mc = new MountClass();
+          mc.Model = Model.Load(Xml.Attr(node, "model"));
+          mc.CenterAngle = Xml.Float(node, "center") * MathConst.DegreesToRadians;
+          double n = Xml.Float(node, "range", 360);
+          mc.MaxTurn = n==180 ? Math.PI/2 : n>=360 ? Math.PI : n*(MathConst.DegreesToRadians*0.5);
+          mc.TurnSpeed = Xml.Float(node, "speed", 1080) * MathConst.DegreesToRadians;
 
           for(int i=0; i<so.faces.Length; i+=3)
           { Point pt = (Point)pts[so.faces[i]];
-            mount.Class.RenderOffset.X += pt.X;
-            mount.Class.RenderOffset.Y += pt.Y;
-            mount.Class.RenderOffset.Z += pt.Z;
+            mc.RenderOffset.X += pt.X;
+            mc.RenderOffset.Y += pt.Y;
+            mc.RenderOffset.Z += pt.Z;
           }
-          mount.Class.RenderOffset /= so.faces.Length/3;
-          
-          mounts.Add(mount);
+          mc.RenderOffset /= so.faces.Length/3;
+
+          mounts.Add(mc);
         }
         else subs.Add(so);
       }
@@ -188,14 +149,14 @@ public sealed class ObjModel : Model
     points     = (Point[])pts.ToArray(typeof(Point));
     normals    = (Vector[])norms.ToArray(typeof(Vector));
     subObjects = (SubObject[])subs.ToArray(typeof(SubObject));
-    Mounts     = (Mount[])mounts.ToArray(typeof(Mount));
+    Mounts     = (MountClass[])mounts.ToArray(typeof(MountClass));
   }
 
   SubObject[] subObjects;
   Point[] points;
   Vector[] normals;
   
-  static Regex mountre = new Regex(@"^mount_([a-zA-Z0-9]+)_(\d+)_(\d+)", RegexOptions.Singleline);
+  static Regex mountre = new Regex(@"^mount_(\d+)", RegexOptions.Singleline);
 }
 
 } // namespace SpaceWinds

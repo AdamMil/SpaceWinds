@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using System.Xml;
 using GameLib.Events;
 using GameLib.Input;
 using GameLib.Interop.OpenGL;
@@ -144,7 +145,7 @@ public abstract class WeaponClass
 #endregion
 
 public sealed class SimpleGun : WeaponClass
-{ public SimpleGun() { MaxAmmo=-1; ReloadTime=0.1; }
+{ public SimpleGun() { MaxAmmo=-1; ReloadTime=1; }
 
   public override SpaceObject CreateProjectile(Point startPoint, Vector baseVelocity, double gunAngle)
   { return new Bullet(startPoint, baseVelocity+new Vector(50, 0).Rotated(gunAngle));
@@ -154,6 +155,17 @@ public sealed class SimpleGun : WeaponClass
 public sealed class Bullet : SpaceObject
 { public Bullet(Point pos, Vector vel) { Pos=pos; Angle=vel.Angle; Velocity=vel; Born=App.Now; }
 
+  public override void RenderModel()
+  { GL.glDisable(GL.GL_LIGHTING);
+    GL.glPointSize(3);
+    GL.glEnable(GL.GL_POINT_SMOOTH);
+    GL.glBegin(GL.GL_POINTS);
+      GL.glColor(System.Drawing.Color.White);
+      GL.glVertex2d(0, 0);
+    GL.glEnd();
+    GL.glEnable(GL.GL_LIGHTING);
+  }
+
   public override void Update()
   { if(App.Now-Born>1.5) Set(ObjFlag.Dead, true);
     else Pos += Velocity*App.TimeDelta;
@@ -161,16 +173,6 @@ public sealed class Bullet : SpaceObject
   
   public Vector Velocity;
   public double Born;
-
-  protected override void RenderModel()
-  { GL.glDisable(GL.GL_LIGHTING);
-    GL.glPointSize(2);
-    GL.glBegin(GL.GL_POINTS);
-      GL.glColor(System.Drawing.Color.White);
-      GL.glVertex2d(0, 0);
-    GL.glEnd();
-    GL.glEnable(GL.GL_LIGHTING);
-  }
 }
 
 #region SpaceObject
@@ -189,6 +191,8 @@ public abstract class SpaceObject
     GL.glPopMatrix();
   }
 
+  public virtual void RenderModel() { Model.Render(); }
+
   public abstract void Update();
 
   public Map Map;
@@ -196,8 +200,6 @@ public abstract class SpaceObject
   public Point Pos;
   public double Angle;
   public ObjFlag Flags;
-  
-  protected virtual void RenderModel() { Model.Render(); }
 }
 #endregion
 
@@ -211,20 +213,70 @@ public abstract class MountsObject : SpaceObject
     }
   }
 
-  public Mount[] Mounts;
-  
-  protected override void RenderModel()
+  public override void RenderModel()
   { base.RenderModel();
     if(Mounts!=null) for(int i=0; i<Mounts.Length; i++) Mounts[i].Render(); 
   }
+
+  public Mount[] Mounts;
+}
+#endregion
+
+#region ShipClass
+public sealed class ShipClass
+{ ShipClass(string className)
+  { XmlElement doc = Misc.LoadXml(className+".xml").DocumentElement;
+    MaxAccel = Xml.Float(doc, "maxAccel");
+    MaxSpeed = Xml.Float(doc, "maxSpeed")*0.1;
+    TurnSpeed = Xml.Float(doc, "turnSpeed") * MathConst.DegreesToRadians;
+    Name   = Xml.Attr(doc, "name");
+    Model  = (ObjModel)SpaceWinds.Model.Load(Xml.Attr(doc, "model", className), doc);
+    Mounts = Model.Mounts;
+  }
+
+  public double MaxSpeed, MaxAccel, TurnSpeed;
+  public string Name;
+  public ObjModel Model;
+  public MountClass[] Mounts;
+  
+  public static ShipClass Load(string shipClass)
+  { ShipClass ret = (ShipClass)classes[shipClass];
+    if(ret==null) classes[shipClass] = ret = new ShipClass(shipClass);
+    return ret;
+  }
+  
+  static Hashtable classes = new Hashtable();
 }
 #endregion
 
 #region Ship
 public abstract class Ship : MountsObject
-{ public void TurnTowards(Point pt) { TurnTowards(GLMath.AngleBetween(Pos, pt)); }
+{ public void AccelerateTowards(double speed)
+  { double accel=speed-Speed, max=Class.MaxAccel*Class.MaxSpeed*App.TimeDelta;
+    if(Math.Abs(accel)>max) accel = max*Math.Sign(accel);
+    if(accel<0) accel *= 0.5;
+
+    Speed += accel;
+
+    if(Speed>Class.MaxSpeed) Speed = Class.MaxSpeed;
+    else
+    { max = -Class.MaxSpeed*(1/3.0);
+      if(Speed<max) Speed = max;
+    }
+  }
+
+  public override void Update() { Pos += new Vector(Speed, 0).Rotated(Angle)*App.TimeDelta; }
+
+  public void SetClass(string shipClass)
+  { Class  = ShipClass.Load(shipClass);
+    Model  = Class.Model;
+    Mounts = new Mount[Class.Mounts.Length];
+    for(int i=0; i<Mounts.Length; i++) Mounts[i].Class = Class.Mounts[i];
+  }
+
+  public void TurnTowards(Point pt) { TurnTowards(GLMath.AngleBetween(Pos, pt)); }
   public void TurnTowards(double desiredAngle)
-  { double turn=desiredAngle-Angle, max=TurnSpeed*App.TimeDelta;
+  { double turn=desiredAngle-Angle, max=Class.TurnSpeed*App.TimeDelta;
     if(turn>Math.PI) turn -= Math.PI*2;
     else if(turn<-Math.PI) turn += Math.PI*2;
     if(Math.Abs(turn)>max) turn = max*Math.Sign(turn);
@@ -232,9 +284,23 @@ public abstract class Ship : MountsObject
     Angle = Misc.NormalizeAngle(Angle+turn);
   }
 
-  public double Throttle, Speed, MaxSpeed, MaxAccel, TurnSpeed;
+  public double Throttle, Speed;
+  public ShipClass Class;
 }
 #endregion
+
+public class AIShip : Ship
+{ public override void Update()
+  { AccelerateTowards(Class.MaxSpeed);
+    double angle = GLMath.AngleBetween(Pos, App.Player.Pos);
+    double dist = (App.Player.Pos - Pos).Length;
+    if(dist<20) TurnTowards(Angle+2);
+    else TurnTowards(angle);
+    AimAt(App.Player.Pos);
+    base.Update();
+    if(dist<50) for(int i=0; i<Mounts.Length; i++) Mounts[i].Fire(this);
+  }
+}
 
 #region Player
 public sealed class Player : Ship
@@ -248,22 +314,19 @@ public sealed class Player : Ship
     }
 
     if(Keyboard.Pressed(Key.Tab))
-    { double accel = MaxAccel*MaxSpeed*2*App.TimeDelta;
-      Speed = Math.Min(Speed+accel, MaxSpeed*2.5);
+    { double accel = Class.MaxAccel*Class.MaxSpeed*2*App.TimeDelta;
+      Speed = Math.Min(Speed+accel, Class.MaxSpeed*2.5);
     }
     else
     { if(Keyboard.Pressed(Key.Q) || Keyboard.Pressed(Key.A))
       { if(Keyboard.Pressed(Key.Q)) Throttle = Math.Min(Throttle+App.TimeDelta, 1);
-        else Throttle = Math.Max(Throttle-App.TimeDelta, 0);
+        else Throttle = Math.Max(Throttle-App.TimeDelta, -0.5);
       }
       if(Keyboard.PressedRel(Key.Backquote)) Throttle = 0;
-
-      double accel=Throttle*MaxSpeed-Speed, max=MaxAccel*MaxSpeed*App.TimeDelta;
-      if(Math.Abs(accel)>max) accel = max*Math.Sign(accel);
-      Speed += accel;
+      AccelerateTowards(Class.MaxSpeed*Throttle);
     }
 
-    Pos += new Vector(Speed, 0).Rotated(Angle)*App.TimeDelta;
+    base.Update();
 
     if(Mounts!=null && Mouse.Pressed(MouseButton.Left)) for(int i=0; i<Mounts.Length; i++) Mounts[i].Fire(this);
   }
