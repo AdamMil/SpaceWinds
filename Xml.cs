@@ -17,12 +17,12 @@ public class Xml
 
   public static XmlAttribute AttrNode(XmlNode node, string attr) { return node==null ? null : node.Attributes[attr]; }
 
-  public static double Float(XmlAttribute attr) { return Float(attr, 0); }
-  public static double Float(XmlAttribute attr, double defaultValue)
-  { return attr==null ? defaultValue : double.Parse(attr.Value);
+  public static float Float(XmlAttribute attr) { return Float(attr, 0); }
+  public static float Float(XmlAttribute attr, float defaultValue)
+  { return attr==null ? defaultValue : float.Parse(attr.Value);
   }
-  public static double Float(XmlNode node, string attr) { return Float(node.Attributes[attr], 0); }
-  public static double Float(XmlNode node, string attr, double defaultValue)
+  public static float Float(XmlNode node, string attr) { return Float(node.Attributes[attr], 0); }
+  public static float Float(XmlNode node, string attr, float defaultValue)
   { return Float(node.Attributes[attr], defaultValue);
   }
 

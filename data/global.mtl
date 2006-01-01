@@ -1,0 +1,45 @@
+newmtl turret
+Ns 292.0
+Ka 0.0 0.0 0.0
+Kd 0.64 0.64 0.64
+Ks 0.2 0.2 0.2
+Ni 1.0
+d 1.0
+illum 2
+
+newmtl shipbody
+Ns 194.0
+Ka 0.0 0.0 0.0
+Kd 0.332549 0.332549 0.332549
+Ks 0.2 0.2 0.2
+Ni 1.0
+d 1.0
+illum 2
+
+newmtl exhaust_port
+Ns 96.0
+Ka 0.0 0.0 0.0
+Kd 0.64 0.64 0.64
+Ks 0.0 0.0 0.0
+Ni 1.0
+d 1.0
+illum 1
+
+newmtl glass
+Ns 292.0
+Ka 0.0 0.0 0.0
+Kd 0.467016 0.412999 0.764107
+Ks 0.5 0.5 0.5
+Ni 1.0
+d 0.5
+illum 2
+
+newmtl planet_earth
+Ns 96.0
+Ka 0.0 0.0 0.0
+Kd 0.64 0.64 0.64
+Ks 0.1 0.1 0.1
+Ni 1.0
+d 1.0
+illum 2
+map_Kd planet_earth.jpg
