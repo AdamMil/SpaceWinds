@@ -3,19 +3,21 @@ using System.Collections;
 using System.IO;
 using System.Text.RegularExpressions;
 using GameLib.Interop.OpenGL;
+using GameLib.Video;
 
 namespace SpaceWinds
 {
 
+#region Material
 public abstract class Material
 { public string Name { get { return name; } }
 
   public static Material Current
   { get { return current; }
     set
-    { if(value==null) throw new NullReferenceException();
-      if(current!=value)
-      { value.Apply();
+    { if(current!=value)
+      { if(current!=null) current.Unapply();
+        if(value!=null) value.Apply();
         current = value;
       }
     }
@@ -24,12 +26,16 @@ public abstract class Material
   public static Material Get(string name) { return (Material)materials[name]; }
 
   protected abstract void Apply();
+  protected virtual void Unapply() { }
+
   protected string name;
 
   protected static Hashtable materials = new Hashtable();
   static Material current;
 }
+#endregion
 
+#region ObjMaterial
 public sealed class ObjMaterial : Material
 { ObjMaterial(TextReader tr, ref string nameLine)
   { name      = nameLine.Substring(7);
@@ -48,6 +54,7 @@ public sealed class ObjMaterial : Material
       else if(line.StartsWith("d ") || line.StartsWith("Tr ")) Alpha = GetValue(line);
       else if(line.StartsWith("Ns ")) Shininess = GetValue(line)*(128f/1000f);
       else if(line.StartsWith("illum")) Model = (int)GetValue(line);
+      else if(line.StartsWith("map_Kd")) Texture = SpaceWinds.Texture.Load(GetText(line));
     }
   }
   
@@ -56,6 +63,7 @@ public sealed class ObjMaterial : Material
     public float R, G, B;
   }
 
+  public readonly GLTexture2D Texture;
   public readonly Color Ambient, Diffuse, Emit, Specular;
   public readonly float Alpha, Shininess;
   public readonly int Model;
@@ -95,6 +103,15 @@ public sealed class ObjMaterial : Material
     { GL.glMaterialColor(GL.GL_FRONT, GL.GL_SPECULAR, 0, 0, 0, 1);
       GL.glMaterialf(GL.GL_FRONT, GL.GL_SHININESS, 0);
     }
+
+    if(Texture!=null)
+    { GL.glEnable(GL.GL_TEXTURE_2D);
+      Texture.Bind();
+    }
+  }
+
+  protected override void Unapply()
+  { if(Texture!=null) GL.glDisable(GL.GL_TEXTURE_2D);
   }
 
   static Color GetColor(string line)
@@ -106,9 +123,36 @@ public sealed class ObjMaterial : Material
     }
   }
 
-  static float GetValue(string line) { return float.Parse(line.Substring(line.IndexOf(' ')+1)); }
+  static float GetValue(string line) { return float.Parse(GetText(line)); }
+  static string GetText(string line) { return line.Substring(line.IndexOf(' ')+1); }
   
   static ArrayList loaded;
 }
+#endregion
+
+#region Texture
+public sealed class Texture
+{ Texture() { }
+
+  public static void FreeAll()
+  { foreach(GLTexture2D tex in textures.Values) tex.Dispose();
+    textures.Clear();
+  }
+
+  public static GLTexture2D Load(string name)
+  { name = name.ToLower();
+    GLTexture2D texture = (GLTexture2D)textures[name];
+    if(texture==null)
+    { textures[name] = texture = new GLTexture2D(App.DataPath+name);
+      texture.Bind();
+      GL.glTexParameterf(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MAG_FILTER, GL.GL_LINEAR);
+      GL.glTexParameterf(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MIN_FILTER, GL.GL_LINEAR);
+    }
+    return texture;
+  }
+  
+  static Hashtable textures = new Hashtable();
+}
+#endregion
 
 } // namespace SpaceWinds

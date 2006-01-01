@@ -1,0 +1,5 @@
+<ship name="Basic Ship" maxAccel="1.5" maxSpeed="80" turnSpeed="270" maxShield="100" shieldRegen="5">
+  <mount id="1" model="tturret1" center="270" range="180"/>
+  <mount id="2" model="tturret1" center="90" range="180"/>
+  <mount id="3" model="bturret1" center="0" range="180"/>
+</ship>

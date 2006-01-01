@@ -1,0 +1,5 @@
+<ship name="U Ship" maxAccel="1.25" maxSpeed="100" turnSpeed="315" maxShield="120" shieldRegen="6">
+  <mount id="1" model="tturret1" center="315" range="180"/>
+  <mount id="2" model="tturret1" center="45" range="180"/>
+  <mount id="3" model="bturret1" center="0" range="360"/>
+</ship>
