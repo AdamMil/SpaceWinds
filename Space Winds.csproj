@@ -118,6 +118,154 @@
                     SubType = "Code"
                     BuildAction = "Compile"
                 />
+                <File
+                    RelPath = "data\bturret1.obj"
+                    BuildAction = "None"
+                />
+                <File
+                    RelPath = "data\global.mtl"
+                    BuildAction = "None"
+                />
+                <File
+                    RelPath = "data\planet_earth.jpg"
+                    BuildAction = "Content"
+                />
+                <File
+                    RelPath = "data\planet_earth.xml"
+                    BuildAction = "Content"
+                />
+                <File
+                    RelPath = "data\planet_earth_bump.jpg"
+                    BuildAction = "Content"
+                />
+                <File
+                    RelPath = "data\planet_jupiter.jpg"
+                    BuildAction = "Content"
+                />
+                <File
+                    RelPath = "data\planet_jupiter.xml"
+                    BuildAction = "Content"
+                />
+                <File
+                    RelPath = "data\planet_mars.jpg"
+                    BuildAction = "Content"
+                />
+                <File
+                    RelPath = "data\planet_mars.xml"
+                    BuildAction = "Content"
+                />
+                <File
+                    RelPath = "data\planet_mars_bump.jpg"
+                    BuildAction = "Content"
+                />
+                <File
+                    RelPath = "data\planet_mercury.jpg"
+                    BuildAction = "Content"
+                />
+                <File
+                    RelPath = "data\planet_mercury.xml"
+                    BuildAction = "Content"
+                />
+                <File
+                    RelPath = "data\planet_mercury_bump.jpg"
+                    BuildAction = "Content"
+                />
+                <File
+                    RelPath = "data\planet_moon.jpg"
+                    BuildAction = "Content"
+                />
+                <File
+                    RelPath = "data\planet_moon.xml"
+                    BuildAction = "Content"
+                />
+                <File
+                    RelPath = "data\planet_moon_bump.jpg"
+                    BuildAction = "Content"
+                />
+                <File
+                    RelPath = "data\planet_moon2.jpg"
+                    BuildAction = "Content"
+                />
+                <File
+                    RelPath = "data\planet_moon2.xml"
+                    BuildAction = "Content"
+                />
+                <File
+                    RelPath = "data\planet_moon2_bump.jpg"
+                    BuildAction = "Content"
+                />
+                <File
+                    RelPath = "data\ship.obj"
+                    BuildAction = "None"
+                />
+                <File
+                    RelPath = "data\ship.xml"
+                    BuildAction = "Content"
+                />
+                <File
+                    RelPath = "data\ship2.obj"
+                    BuildAction = "None"
+                />
+                <File
+                    RelPath = "data\ship2.xml"
+                    BuildAction = "Content"
+                />
+                <File
+                    RelPath = "data\sun.jpg"
+                    BuildAction = "Content"
+                />
+                <File
+                    RelPath = "data\sun.xml"
+                    BuildAction = "Content"
+                />
+                <File
+                    RelPath = "data\test_grid.png"
+                    BuildAction = "Content"
+                />
+                <File
+                    RelPath = "data\tturret1.obj"
+                    BuildAction = "None"
+                />
+                <File
+                    RelPath = "data\work\bturret1.blend"
+                    BuildAction = "None"
+                />
+                <File
+                    RelPath = "data\work\bturret1.blend1"
+                    BuildAction = "None"
+                />
+                <File
+                    RelPath = "data\work\die.blend"
+                    BuildAction = "None"
+                />
+                <File
+                    RelPath = "data\work\obj_spec.pdf"
+                    BuildAction = "None"
+                />
+                <File
+                    RelPath = "data\work\ship.blend"
+                    BuildAction = "None"
+                />
+                <File
+                    RelPath = "data\work\ship.blend1"
+                    BuildAction = "None"
+                />
+                <File
+                    RelPath = "data\work\ship2.blend"
+                    BuildAction = "None"
+                />
+                <File
+                    RelPath = "data\work\ship2.blend1"
+                    BuildAction = "None"
+                />
+                <File
+                    RelPath = "data\work\tturret1.blend"
+                    BuildAction = "None"
+                />
+                <File
+                    RelPath = "data\work\tturret1.blend1"
+                    BuildAction = "None"
+                />
             </Include>
         </Files>
     </CSHARP>

@@ -73,7 +73,7 @@ public sealed class App
       map.Add(ai);
 
       Planet earth = new Planet();
-      earth.Model = Model.Load("planet_mercury");
+      earth.Model = Model.Load("planet_earth");
       earth.Pos = new Point2(10, 10);
         earth.SetAxis(new GameLib.Mathematics.ThreeD.Quaternion(new Vector3(1, 0, 0), 15*MathConst.DegreesToRadians) *
                     new GameLib.Mathematics.ThreeD.Quaternion(new Vector3(0, 1, 0), 15*MathConst.DegreesToRadians));
