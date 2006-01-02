@@ -11,6 +11,7 @@ namespace SpaceWinds
 #region Material
 public abstract class Material
 { public string Name { get { return name; } }
+  public bool UsesTexture { get { return usesTexture; } }
 
   public static Material Current
   { get { return current; }
@@ -29,6 +30,7 @@ public abstract class Material
   protected virtual void Unapply() { }
 
   protected string name;
+  protected bool usesTexture;
 
   protected static Hashtable materials = new Hashtable();
   static Material current;
@@ -54,7 +56,10 @@ public sealed class ObjMaterial : Material
       else if(line.StartsWith("d ") || line.StartsWith("Tr ")) Alpha = GetValue(line);
       else if(line.StartsWith("Ns ")) Shininess = GetValue(line)*(128f/1000f);
       else if(line.StartsWith("illum")) Model = (int)GetValue(line);
-      else if(line.StartsWith("map_Kd")) Texture = SpaceWinds.Texture.Load(GetText(line));
+      else if(line.StartsWith("map_Kd"))
+      { textureName = GetText(line);
+        usesTexture = true;
+      }
     }
   }
   
@@ -63,7 +68,6 @@ public sealed class ObjMaterial : Material
     public float R, G, B;
   }
 
-  public readonly GLTexture2D Texture;
   public readonly Color Ambient, Diffuse, Emit, Specular;
   public readonly float Alpha, Shininess;
   public readonly int Model;
@@ -104,15 +108,19 @@ public sealed class ObjMaterial : Material
       GL.glMaterialf(GL.GL_FRONT, GL.GL_SHININESS, 0);
     }
 
-    if(Texture!=null)
+    if(usesTexture)
     { GL.glEnable(GL.GL_TEXTURE_2D);
-      Texture.Bind();
+      if(texture==null) texture = Texture.Load(textureName);
+      texture.Bind();
     }
   }
 
   protected override void Unapply()
-  { if(Texture!=null) GL.glDisable(GL.GL_TEXTURE_2D);
+  { if(usesTexture) GL.glDisable(GL.GL_TEXTURE_2D);
   }
+
+  GLTexture2D texture;
+  string textureName;
 
   static Color GetColor(string line)
   { string[] c = line.Split(' ');
@@ -147,6 +155,8 @@ public sealed class Texture
       texture.Bind();
       GL.glTexParameterf(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MAG_FILTER, GL.GL_LINEAR);
       GL.glTexParameterf(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MIN_FILTER, GL.GL_LINEAR);
+      GL.glTexParameterf(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_WRAP_S, GL.GL_REPEAT); 
+      GL.glTexParameterf(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_WRAP_T, GL.GL_REPEAT);
     }
     return texture;
   }
