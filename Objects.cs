@@ -254,7 +254,7 @@ public class Planet : SpaceObject
   public override void Render()
   { GL.glPushMatrix();
     GL.glTranslatef(X, Y, 0);
-    GL.glRotated(AxisAngle*MathConst.RadiansToDegrees, Axis.X, Axis.Y, Axis.Z);
+    if(AxisAngle!=0) GL.glRotated(AxisAngle*MathConst.RadiansToDegrees, Axis.X, Axis.Y, Axis.Z);
     GL.glRotated(Angle*MathConst.RadiansToDegrees, 0, 0, 1);
     RenderModel();
     GL.glPopMatrix();

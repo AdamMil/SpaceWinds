@@ -57,6 +57,7 @@ public sealed class App
   public static void Main()
   { Video.Initialize();
     SetMode(800, 600, fullScreen=false);
+    ObjMaterial.LoadLibrary("global.mtl");
 
     try
     { Map map = new Map();
@@ -72,9 +73,9 @@ public sealed class App
       map.Add(ai);
 
       Planet earth = new Planet();
-      earth.Model = Model.Load("planet_earth");
-      earth.Pos = new Point2(15, 10);
-      earth.SetAxis(new GameLib.Mathematics.ThreeD.Quaternion(new Vector3(1, 0, 0), 15*MathConst.DegreesToRadians) *
+      earth.Model = Model.Load("planet_mercury");
+      earth.Pos = new Point2(10, 10);
+        earth.SetAxis(new GameLib.Mathematics.ThreeD.Quaternion(new Vector3(1, 0, 0), 15*MathConst.DegreesToRadians) *
                     new GameLib.Mathematics.ThreeD.Quaternion(new Vector3(0, 1, 0), 15*MathConst.DegreesToRadians));
       earth.RotateSpeed = (float)(Math.PI/64);
       map.Add(earth);

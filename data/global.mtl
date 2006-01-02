@@ -43,3 +43,73 @@ Ni 1.0
 d 1.0
 illum 2
 map_Kd planet_earth.jpg
+
+newmtl sun
+Ns 96.0
+Ka 0.0 0.0 0.0
+Kd 0.64 0.64 0.64
+Ks 0.1 0.1 0.1
+Ni 1.0
+d 1.0
+illum 2
+map_Kd sun.jpg
+
+newmtl planet_mars
+Ns 96.0
+Ka 0.0 0.0 0.0
+Kd 0.64 0.64 0.64
+Ks 0.1 0.1 0.1
+Ni 1.0
+d 1.0
+illum 2
+map_Kd planet_mars.jpg
+
+newmtl planet_mercury
+Ns 96.0
+Ka 0.0 0.0 0.0
+Kd 0.64 0.64 0.64
+Ks 0.1 0.1 0.1
+Ni 1.0
+d 1.0
+illum 2
+map_Kd planet_mercury.jpg
+
+newmtl planet_moon
+Ns 96.0
+Ka 0.0 0.0 0.0
+Kd 0.64 0.64 0.64
+Ks 0.1 0.1 0.1
+Ni 1.0
+d 1.0
+illum 2
+map_Kd planet_moon.jpg
+
+newmtl planet_moon2
+Ns 96.0
+Ka 0.0 0.0 0.0
+Kd 0.64 0.64 0.64
+Ks 0.1 0.1 0.1
+Ni 1.0
+d 1.0
+illum 2
+map_Kd planet_moon2.jpg
+
+newmtl planet_jupiter
+Ns 96.0
+Ka 0.0 0.0 0.0
+Kd 0.64 0.64 0.64
+Ks 0.1 0.1 0.1
+Ni 1.0
+d 1.0
+illum 2
+map_Kd planet_jupiter.jpg
+
+newmtl test_grid
+Ns 96.0
+Ka 0.0 0.0 0.0
+Kd 0.64 0.64 0.64
+Ks 0.1 0.1 0.1
+Ni 1.0
+d 1.0
+illum 2
+map_Kd test_grid.png
