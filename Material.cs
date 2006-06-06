@@ -1,5 +1,5 @@
 using System;
-using System.Collections;
+using System.Collections.Generic;
 using System.IO;
 using System.Text.RegularExpressions;
 using GameLib.Interop.OpenGL;
@@ -32,7 +32,7 @@ public abstract class Material
   protected string name;
   protected bool usesTexture;
 
-  protected static Hashtable materials = new Hashtable();
+  protected static Dictionary<string,Material> materials = new Dictionary<string,Material>();
   static Material current;
 }
 #endregion
@@ -73,7 +73,7 @@ public sealed class ObjMaterial : Material
   public readonly int Model;
 
   public static void LoadLibrary(string path)
-  { if(loaded==null) { loaded = new ArrayList(); loaded.Add(path); }
+  { if(loaded==null) { loaded = new List<string>(); loaded.Add(path); }
     else if(loaded.Contains(path)) return;
 
     TextReader tr = new StreamReader(App.DataPath+path);
@@ -134,7 +134,7 @@ public sealed class ObjMaterial : Material
   static float GetValue(string line) { return float.Parse(GetText(line)); }
   static string GetText(string line) { return line.Substring(line.IndexOf(' ')+1); }
   
-  static ArrayList loaded;
+  static List<string> loaded;
 }
 #endregion
 
@@ -149,8 +149,8 @@ public sealed class Texture
 
   public static GLTexture2D Load(string name)
   { name = name.ToLower();
-    GLTexture2D texture = (GLTexture2D)textures[name];
-    if(texture==null)
+    GLTexture2D texture;
+    if(!textures.TryGetValue(name, out texture))
     { textures[name] = texture = new GLTexture2D(App.DataPath+name);
       texture.Bind();
       GL.glTexParameterf(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MAG_FILTER, GL.GL_LINEAR);
@@ -161,7 +161,7 @@ public sealed class Texture
     return texture;
   }
   
-  static Hashtable textures = new Hashtable();
+  static Dictionary<string,GLTexture2D> textures = new Dictionary<string,GLTexture2D>();
 }
 #endregion
 

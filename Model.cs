@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.IO;
 using System.Text.RegularExpressions;
 using System.Xml;
@@ -21,8 +22,8 @@ public abstract class Model
 
   public static Model Load(string modelName) { return Load(modelName, null); }
   public static Model Load(string modelName, XmlElement data)
-  { Model model = (Model)models[modelName];
-    if(model==null)
+  { Model model;
+    if(!models.TryGetValue(modelName, out model))
     { if(data==null)
       { XmlDocument doc = Misc.LoadXml(modelName+".xml", false);
         if(doc!=null)
@@ -36,7 +37,7 @@ public abstract class Model
     return model;
   }
 
-  static Hashtable models = new Hashtable();
+  static Dictionary<string,Model> models = new Dictionary<string,Model>();
 }
 #endregion
 
