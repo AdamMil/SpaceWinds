@@ -1,5 +1,5 @@
 using System;
-using System.Collections;
+using System.Collections.Generic;
 using System.Xml;
 using GameLib.Events;
 using GameLib.Input;
@@ -315,12 +315,12 @@ public sealed class ShipClass
   public MountClass[] Mounts;
   
   public static ShipClass Load(string shipClass)
-  { ShipClass ret = (ShipClass)classes[shipClass];
-    if(ret==null) classes[shipClass] = ret = new ShipClass(shipClass);
+  { ShipClass ret;
+    if(!classes.TryGetValue(shipClass, out ret)) classes[shipClass] = ret = new ShipClass(shipClass);
     return ret;
   }
   
-  static Hashtable classes = new Hashtable();
+  static Dictionary<string,ShipClass> classes = new Dictionary<string,ShipClass>();
 }
 #endregion
 

@@ -1,5 +1,5 @@
 using System;
-using System.Collections;
+using System.Collections.Generic;
 using GameLib.Interop.OpenGL;
 using GameLib.Mathematics.TwoD;
 using SPoint=System.Drawing.Point;
@@ -23,8 +23,12 @@ public sealed class Map
     obj.Map = null;
   }
 
-  public ArrayList GetObjects(float x, float y) { return (ArrayList)parts[WorldToPart(x, y)]; }
-  public ArrayList GetObjects(SPoint pt) { return (ArrayList)parts[pt]; }
+  public List<SpaceObject> GetObjects(float x, float y) { return GetObjects(WorldToPart(x, y)); }
+  public List<SpaceObject> GetObjects(SPoint pt)
+  { List<SpaceObject> list;
+    parts.TryGetValue(pt, out list);
+    return list;
+  }
 
   public Point PartToWorld(int x, int y) { return new Point(x*Factor, y*Factor); }
 
@@ -90,11 +94,11 @@ public sealed class Map
 
   public void Update()
   { if(parts.Count>partArr.Length)
-    { partArr = new DictionaryEntry[parts.Count];
+    { partArr = new KeyValuePair<System.Drawing.Point,List<SpaceObject>>[parts.Count];
       partArrChanged = true;
     }
     if(partArrChanged)
-    { parts.CopyTo(partArr, 0);
+    { ((System.Collections.ICollection)parts).CopyTo(partArr, 0);
       partArrChanged = false;
     }
 
@@ -102,13 +106,12 @@ public sealed class Map
     // FIXME: allow objects to be in all partitions within their radius. this allows collision detection to work
     // correctly in the edge cases. add an ObjFlag to allow us to prevent objects from being updated twice
     for(int pi=0,pcount=parts.Count; pi<pcount; pi++)
-    { DictionaryEntry de = partArr[pi];
-      ArrayList objs = (ArrayList)de.Value;
+    { KeyValuePair<SPoint,List<SpaceObject>> de = partArr[pi];
+      List<SpaceObject> objs = de.Value;
       if(objs.Count==0) list.Add(de);
       else
-      { SPoint part = (SPoint)de.Key;
         for(int i=objs.Count-1; i>=0; i--)
-        { SpaceObject obj = (SpaceObject)objs[i];
+        { SpaceObject obj = objs[i];
 
           if(!obj.Is(ObjFlag.Dead)) obj.Update();
 
@@ -118,28 +121,27 @@ public sealed class Map
           }
           else
           { SPoint npart = WorldToPart(obj.X, obj.Y);
-            if(part!=npart)
+            if(de.Key!=npart)
             { objs.RemoveAt(i);
               MakeObjects(npart).Add(obj);
             }
           }
         }
-      }
     }
 
     if(list.Count!=0)
-    { foreach(DictionaryEntry de in list) if(((ArrayList)de.Value).Count==0) parts.Remove(de.Key);
+    { foreach(KeyValuePair<SPoint,List<SpaceObject>> de in list) if(de.Value.Count==0) parts.Remove(de.Key);
       list.Clear();
       partArrChanged = true;
     }
 
-    foreach(ArrayList objs in parts.Values) // now check for collisions
+    foreach(List<SpaceObject> objs in parts.Values) // now check for collisions
     { objs.Sort(CollisionSort.Instance);
       int count = 0;
-      for(; count<objs.Count; count++) if((((SpaceObject)objs[count]).Flags&ObjFlag.HitMask) != ObjFlag.NoHit) break;
+      for(; count<objs.Count; count++) if((objs[count].Flags&ObjFlag.HitMask) != ObjFlag.NoHit) break;
       count = objs.Count - count;
       if(objArr.Length<count) objArr = new SpaceObject[count];
-      objs.CopyTo(objs.Count-count, objArr, 0, count);
+      objs.CopyTo(objs.Count-count, objArr, 0, count); // TODO: eliminate this separate array now that we have generics
 
       int missile=-1, ship=-1, planet=-1;
 
@@ -179,33 +181,34 @@ public sealed class Map
   { return new SPoint((int)Math.Floor(x/Factor), (int)Math.Floor(y/Factor));
   }
 
-  sealed class CollisionSort : IComparer
+  sealed class CollisionSort : IComparer<SpaceObject>
   { CollisionSort() { }
 
-    public int Compare(object a, object b)
-    { ObjFlag fa=((SpaceObject)a).Flags&ObjFlag.HitMask, fb=((SpaceObject)b).Flags&ObjFlag.HitMask;
+    public int Compare(SpaceObject a, SpaceObject b)
+    { ObjFlag fa=a.Flags&ObjFlag.HitMask, fb=b.Flags&ObjFlag.HitMask;
       return (int)fa-(int)fb;
     }
     
     public static readonly CollisionSort Instance = new CollisionSort();
   }
 
-  ArrayList MakeObjects(SPoint pt)
-  { ArrayList list = (ArrayList)parts[pt];
+  List<SpaceObject> MakeObjects(SPoint pt)
+  { List<SpaceObject> list;
+    if(!parts.TryGetValue(pt, out list))
     if(list==null)
-    { parts[pt] = list = new ArrayList();
+    { parts[pt] = list = new List<SpaceObject>();
       partArrChanged = true;
     }
     return list;
   }
 
   void RenderObjects(int x, int y)
-  { ArrayList objs = GetObjects(new SPoint(x, y));
+  { List<SpaceObject> objs = GetObjects(new SPoint(x, y));
     if(objs==null) return;
     foreach(SpaceObject obj in objs) obj.Render();
   }
 
-  Hashtable parts = new Hashtable();
+  Dictionary<SPoint,List<SpaceObject>> parts = new Dictionary<System.Drawing.Point,List<SpaceObject>>();
   
   static void CheckCollisions(int start, int end, int count)
   { if(start==end || end==count) return;
@@ -221,9 +224,9 @@ public sealed class Map
     }
   }
   
-  static ArrayList list = new ArrayList();
+  static List<KeyValuePair<SPoint,List<SpaceObject>>> list = new List<KeyValuePair<System.Drawing.Point,List<SpaceObject>>>();
   static SpaceObject[] objArr = new SpaceObject[0];
-  static DictionaryEntry[] partArr = new DictionaryEntry[0];
+  static KeyValuePair<SPoint,List<SpaceObject>>[] partArr = new KeyValuePair<System.Drawing.Point,List<SpaceObject>>[0];
   static bool partArrChanged;
 }
 

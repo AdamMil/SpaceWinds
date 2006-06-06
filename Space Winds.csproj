@@ -1,273 +1,157 @@
-<VisualStudioProject>
-    <CSHARP
-        ProjectType = "Local"
-        ProductVersion = "7.10.3077"
-        SchemaVersion = "2.0"
-        ProjectGuid = "{70D80A5C-9D9E-42F0-A5DE-B188F2FCF717}"
-    >
-        <Build>
-            <Settings
-                ApplicationIcon = ""
-                AssemblyKeyContainerName = ""
-                AssemblyName = "Space Winds"
-                AssemblyOriginatorKeyFile = ""
-                DefaultClientScript = "JScript"
-                DefaultHTMLPageLayout = "Grid"
-                DefaultTargetSchema = "IE50"
-                DelaySign = "false"
-                OutputType = "Exe"
-                PreBuildEvent = ""
-                PostBuildEvent = ""
-                RootNamespace = "SpaceWinds"
-                RunPostBuildEvent = "OnBuildSuccess"
-                StartupObject = ""
-            >
-                <Config
-                    Name = "Debug"
-                    AllowUnsafeBlocks = "false"
-                    BaseAddress = "285212672"
-                    CheckForOverflowUnderflow = "false"
-                    ConfigurationOverrideFile = ""
-                    DefineConstants = "DEBUG;TRACE"
-                    DocumentationFile = ""
-                    DebugSymbols = "true"
-                    FileAlignment = "4096"
-                    IncrementalBuild = "false"
-                    NoStdLib = "false"
-                    NoWarn = ""
-                    Optimize = "false"
-                    OutputPath = "bin\Debug\"
-                    RegisterForComInterop = "false"
-                    RemoveIntegerChecks = "false"
-                    TreatWarningsAsErrors = "false"
-                    WarningLevel = "4"
-                />
-                <Config
-                    Name = "Release"
-                    AllowUnsafeBlocks = "false"
-                    BaseAddress = "285212672"
-                    CheckForOverflowUnderflow = "false"
-                    ConfigurationOverrideFile = ""
-                    DefineConstants = "TRACE"
-                    DocumentationFile = ""
-                    DebugSymbols = "false"
-                    FileAlignment = "4096"
-                    IncrementalBuild = "false"
-                    NoStdLib = "false"
-                    NoWarn = ""
-                    Optimize = "true"
-                    OutputPath = "bin\Release\"
-                    RegisterForComInterop = "false"
-                    RemoveIntegerChecks = "false"
-                    TreatWarningsAsErrors = "false"
-                    WarningLevel = "4"
-                />
-            </Settings>
-            <References>
-                <Reference
-                    Name = "System"
-                    AssemblyName = "System"
-                    HintPath = "C:\WINDOWS\Microsoft.NET\Framework\v1.1.4322\System.dll"
-                />
-                <Reference
-                    Name = "GameLib"
-                    Project = "{79014105-2BDA-4D27-98AE-2DE3F5254252}"
-                    Package = "{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}"
-                />
-                <Reference
-                    Name = "System.Drawing"
-                    AssemblyName = "System.Drawing"
-                    HintPath = "C:\WINDOWS\Microsoft.NET\Framework\v1.1.4322\System.Drawing.dll"
-                />
-                <Reference
-                    Name = "System.XML"
-                    AssemblyName = "System.Xml"
-                    HintPath = "C:\WINDOWS\Microsoft.NET\Framework\v1.1.4322\System.XML.dll"
-                />
-            </References>
-        </Build>
-        <Files>
-            <Include>
-                <File
-                    RelPath = "main.cs"
-                    SubType = "Code"
-                    BuildAction = "Compile"
-                />
-                <File
-                    RelPath = "Map.cs"
-                    SubType = "Code"
-                    BuildAction = "Compile"
-                />
-                <File
-                    RelPath = "Material.cs"
-                    SubType = "Code"
-                    BuildAction = "Compile"
-                />
-                <File
-                    RelPath = "Model.cs"
-                    SubType = "Code"
-                    BuildAction = "Compile"
-                />
-                <File
-                    RelPath = "Objects.cs"
-                    SubType = "Code"
-                    BuildAction = "Compile"
-                />
-                <File
-                    RelPath = "Xml.cs"
-                    SubType = "Code"
-                    BuildAction = "Compile"
-                />
-                <File
-                    RelPath = "data\bturret1.obj"
-                    BuildAction = "None"
-                />
-                <File
-                    RelPath = "data\global.mtl"
-                    BuildAction = "None"
-                />
-                <File
-                    RelPath = "data\planet_earth.jpg"
-                    BuildAction = "Content"
-                />
-                <File
-                    RelPath = "data\planet_earth.xml"
-                    BuildAction = "Content"
-                />
-                <File
-                    RelPath = "data\planet_earth_bump.jpg"
-                    BuildAction = "Content"
-                />
-                <File
-                    RelPath = "data\planet_jupiter.jpg"
-                    BuildAction = "Content"
-                />
-                <File
-                    RelPath = "data\planet_jupiter.xml"
-                    BuildAction = "Content"
-                />
-                <File
-                    RelPath = "data\planet_mars.jpg"
-                    BuildAction = "Content"
-                />
-                <File
-                    RelPath = "data\planet_mars.xml"
-                    BuildAction = "Content"
-                />
-                <File
-                    RelPath = "data\planet_mars_bump.jpg"
-                    BuildAction = "Content"
-                />
-                <File
-                    RelPath = "data\planet_mercury.jpg"
-                    BuildAction = "Content"
-                />
-                <File
-                    RelPath = "data\planet_mercury.xml"
-                    BuildAction = "Content"
-                />
-                <File
-                    RelPath = "data\planet_mercury_bump.jpg"
-                    BuildAction = "Content"
-                />
-                <File
-                    RelPath = "data\planet_moon.jpg"
-                    BuildAction = "Content"
-                />
-                <File
-                    RelPath = "data\planet_moon.xml"
-                    BuildAction = "Content"
-                />
-                <File
-                    RelPath = "data\planet_moon_bump.jpg"
-                    BuildAction = "Content"
-                />
-                <File
-                    RelPath = "data\planet_moon2.jpg"
-                    BuildAction = "Content"
-                />
-                <File
-                    RelPath = "data\planet_moon2.xml"
-                    BuildAction = "Content"
-                />
-                <File
-                    RelPath = "data\planet_moon2_bump.jpg"
-                    BuildAction = "Content"
-                />
-                <File
-                    RelPath = "data\ship.obj"
-                    BuildAction = "None"
-                />
-                <File
-                    RelPath = "data\ship.xml"
-                    BuildAction = "Content"
-                />
-                <File
-                    RelPath = "data\ship2.obj"
-                    BuildAction = "None"
-                />
-                <File
-                    RelPath = "data\ship2.xml"
-                    BuildAction = "Content"
-                />
-                <File
-                    RelPath = "data\sun.jpg"
-                    BuildAction = "Content"
-                />
-                <File
-                    RelPath = "data\sun.xml"
-                    BuildAction = "Content"
-                />
-                <File
-                    RelPath = "data\test_grid.png"
-                    BuildAction = "Content"
-                />
-                <File
-                    RelPath = "data\tturret1.obj"
-                    BuildAction = "None"
-                />
-                <File
-                    RelPath = "data\work\bturret1.blend"
-                    BuildAction = "None"
-                />
-                <File
-                    RelPath = "data\work\bturret1.blend1"
-                    BuildAction = "None"
-                />
-                <File
-                    RelPath = "data\work\die.blend"
-                    BuildAction = "None"
-                />
-                <File
-                    RelPath = "data\work\obj_spec.pdf"
-                    BuildAction = "None"
-                />
-                <File
-                    RelPath = "data\work\ship.blend"
-                    BuildAction = "None"
-                />
-                <File
-                    RelPath = "data\work\ship.blend1"
-                    BuildAction = "None"
-                />
-                <File
-                    RelPath = "data\work\ship2.blend"
-                    BuildAction = "None"
-                />
-                <File
-                    RelPath = "data\work\ship2.blend1"
-                    BuildAction = "None"
-                />
-                <File
-                    RelPath = "data\work\tturret1.blend"
-                    BuildAction = "None"
-                />
-                <File
-                    RelPath = "data\work\tturret1.blend1"
-                    BuildAction = "None"
-                />
-            </Include>
-        </Files>
-    </CSHARP>
-</VisualStudioProject>
-
+﻿<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <ProjectType>Local</ProjectType>
+    <ProductVersion>8.0.50727</ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{70D80A5C-9D9E-42F0-A5DE-B188F2FCF717}</ProjectGuid>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ApplicationIcon>
+    </ApplicationIcon>
+    <AssemblyKeyContainerName>
+    </AssemblyKeyContainerName>
+    <AssemblyName>Space Winds</AssemblyName>
+    <AssemblyOriginatorKeyFile>
+    </AssemblyOriginatorKeyFile>
+    <DefaultClientScript>JScript</DefaultClientScript>
+    <DefaultHTMLPageLayout>Grid</DefaultHTMLPageLayout>
+    <DefaultTargetSchema>IE50</DefaultTargetSchema>
+    <DelaySign>false</DelaySign>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>SpaceWinds</RootNamespace>
+    <RunPostBuildEvent>OnBuildSuccess</RunPostBuildEvent>
+    <StartupObject>
+    </StartupObject>
+    <FileUpgradeFlags>
+    </FileUpgradeFlags>
+    <UpgradeBackupLocation>
+    </UpgradeBackupLocation>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <OutputPath>bin\Debug\</OutputPath>
+    <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
+    <BaseAddress>285212672</BaseAddress>
+    <CheckForOverflowUnderflow>false</CheckForOverflowUnderflow>
+    <ConfigurationOverrideFile>
+    </ConfigurationOverrideFile>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <DocumentationFile>
+    </DocumentationFile>
+    <DebugSymbols>true</DebugSymbols>
+    <FileAlignment>4096</FileAlignment>
+    <NoStdLib>false</NoStdLib>
+    <NoWarn>
+    </NoWarn>
+    <Optimize>false</Optimize>
+    <RegisterForComInterop>false</RegisterForComInterop>
+    <RemoveIntegerChecks>false</RemoveIntegerChecks>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <WarningLevel>4</WarningLevel>
+    <DebugType>full</DebugType>
+    <ErrorReport>prompt</ErrorReport>
+    <UseVSHostingProcess>false</UseVSHostingProcess>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <OutputPath>bin\Release\</OutputPath>
+    <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
+    <BaseAddress>285212672</BaseAddress>
+    <CheckForOverflowUnderflow>false</CheckForOverflowUnderflow>
+    <ConfigurationOverrideFile>
+    </ConfigurationOverrideFile>
+    <DefineConstants>TRACE</DefineConstants>
+    <DocumentationFile>
+    </DocumentationFile>
+    <DebugSymbols>false</DebugSymbols>
+    <FileAlignment>4096</FileAlignment>
+    <NoStdLib>false</NoStdLib>
+    <NoWarn>
+    </NoWarn>
+    <Optimize>true</Optimize>
+    <RegisterForComInterop>false</RegisterForComInterop>
+    <RemoveIntegerChecks>false</RemoveIntegerChecks>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <WarningLevel>4</WarningLevel>
+    <DebugType>none</DebugType>
+    <ErrorReport>prompt</ErrorReport>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System">
+      <Name>System</Name>
+    </Reference>
+    <Reference Include="System.Drawing">
+      <Name>System.Drawing</Name>
+    </Reference>
+    <Reference Include="System.Xml">
+      <Name>System.XML</Name>
+    </Reference>
+    <ProjectReference Include="..\GameLib\GameLib.csproj">
+      <Name>GameLib</Name>
+      <Project>{79014105-2BDA-4D27-98AE-2DE3F5254252}</Project>
+      <Package>{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</Package>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="main.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Map.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Material.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Model.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Objects.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Xml.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <None Include="data\bturret1.obj" />
+    <None Include="data\global.mtl" />
+    <None Include="data\ship.obj" />
+    <None Include="data\ship2.obj" />
+    <None Include="data\tturret1.obj" />
+    <None Include="data\work\bturret1.blend" />
+    <None Include="data\work\bturret1.blend1" />
+    <None Include="data\work\die.blend" />
+    <None Include="data\work\obj_spec.pdf" />
+    <None Include="data\work\ship.blend" />
+    <None Include="data\work\ship.blend1" />
+    <None Include="data\work\ship2.blend" />
+    <None Include="data\work\ship2.blend1" />
+    <None Include="data\work\tturret1.blend" />
+    <None Include="data\work\tturret1.blend1" />
+    <Content Include="data\planet_earth.jpg" />
+    <Content Include="data\planet_earth.xml" />
+    <Content Include="data\planet_earth_bump.jpg" />
+    <Content Include="data\planet_jupiter.jpg" />
+    <Content Include="data\planet_jupiter.xml" />
+    <Content Include="data\planet_mars.jpg" />
+    <Content Include="data\planet_mars.xml" />
+    <Content Include="data\planet_mars_bump.jpg" />
+    <Content Include="data\planet_mercury.jpg" />
+    <Content Include="data\planet_mercury.xml" />
+    <Content Include="data\planet_mercury_bump.jpg" />
+    <Content Include="data\planet_moon.jpg" />
+    <Content Include="data\planet_moon.xml" />
+    <Content Include="data\planet_moon2.jpg" />
+    <Content Include="data\planet_moon2.xml" />
+    <Content Include="data\planet_moon2_bump.jpg" />
+    <Content Include="data\planet_moon_bump.jpg" />
+    <Content Include="data\ship.xml" />
+    <Content Include="data\ship2.xml" />
+    <Content Include="data\sun.jpg" />
+    <Content Include="data\sun.xml" />
+    <Content Include="data\test_grid.png" />
+  </ItemGroup>
+  <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
+  <PropertyGroup>
+    <PreBuildEvent>
+    </PreBuildEvent>
+    <PostBuildEvent>
+    </PostBuildEvent>
+  </PropertyGroup>
+</Project>
