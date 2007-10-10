@@ -6,6 +6,7 @@ using GameLib.Events;
 using GameLib.Input;
 using GameLib.Video;
 using GameLib.Mathematics;
+using GameLib.Mathematics.TwoD;
 using Point2=GameLib.Mathematics.TwoD.Point;
 using Point3=GameLib.Mathematics.ThreeD.Point;
 using Vector3=GameLib.Mathematics.ThreeD.Vector;
@@ -324,11 +325,11 @@ Console.WriteLine("frameTime: "+frameTime.ToString());
 public sealed class Misc
 { Misc() { }
 
-  public static float AngleBetween(Point2 a, Point2 b) { return (float)GLMath.AngleBetween(a, b); }
-  public static float AngleBetween(Point2 a, Point3 b) { return (float)GLMath.AngleBetween(a, new Point2(b.X, b.Y)); }
-  public static float AngleBetween(Point3 a, Point2 b) { return (float)GLMath.AngleBetween(new Point2(a.X, a.Y), b); }
+  public static float AngleBetween(Point2 a, Point2 b) { return (float)Math2D.AngleBetween(a, b); }
+  public static float AngleBetween(Point2 a, Point3 b) { return (float)Math2D.AngleBetween(a, new Point2(b.X, b.Y)); }
+  public static float AngleBetween(Point3 a, Point2 b) { return (float)Math2D.AngleBetween(new Point2(a.X, a.Y), b); }
   public static float AngleBetween(Point3 a, Point3 b)
-  { return (float)GLMath.AngleBetween(new Point2(a.X, b.X), new Point2(b.X, b.Y));
+  { return (float)Math2D.AngleBetween(new Point2(a.X, b.X), new Point2(b.X, b.Y));
   }
 
   public static System.IO.Stream LoadData(string path) { return LoadData(path, true); }
