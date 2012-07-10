@@ -199,8 +199,8 @@ public sealed class ObjModel : Model
   Point[] points;
   Vector[] normals;
   Point2[] texCoords;
-  
-  static Regex mountre = new Regex(@"^mount_(\d+)", RegexOptions.Singleline);
+
+  static readonly Regex mountre = new Regex(@"^mount_(\d+)", RegexOptions.Singleline);
 }
 #endregion
 
