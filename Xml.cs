@@ -47,9 +47,9 @@ public class Xml
   public static string[] List(XmlAttribute attr) { return IsEmpty(attr) ? new string[0] : split.Split(attr.Value); }
   public static string[] List(string data) { return IsEmpty(data) ? new string[0] : split.Split(data); }
 
-  static Regex ltbl   = new Regex(@"^(?:\s*\n)+|\s+$", RegexOptions.Singleline);
-  static Regex lspc   = new Regex(@"^\s+", RegexOptions.Singleline);
-  static Regex split  = new Regex(@"\s+", RegexOptions.Singleline);
+  static readonly Regex ltbl   = new Regex(@"^(?:\s*\n)+|\s+$", RegexOptions.Singleline);
+  static readonly Regex lspc   = new Regex(@"^\s+", RegexOptions.Singleline);
+  static readonly Regex split  = new Regex(@"\s+", RegexOptions.Singleline);
 }
 
 } // namespace SpaceWinds
