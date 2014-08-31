@@ -1,0 +1,1 @@
+This was going to be a clone of the old game Solar Winds, but with updated graphics. I learned some rudimentary 3D modeling for this game, and created a couple ships. The code lets you fly one of the ships while being attacked by an AI flying the other ship. Alas, I never finished it.
